@@ -1,4 +1,4 @@
-import { _electron as electron } from '/Users/xujin/agent-harness/playwright-skill/node_modules/playwright/index.mjs';
+import { _electron as electron } from './playwright-resolve.mjs';
 import fs from 'node:fs';
 
 const outDir = 'test/evidence/ui-baseline';

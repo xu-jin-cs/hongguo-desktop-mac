@@ -17,9 +17,9 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { _electron } = require('/Users/xujin/agent-harness/playwright-skill/node_modules/playwright');
+const { _electron } = require(process.env.HG_PLAYWRIGHT_PATH || 'playwright');
 
-const ROOT = '/Users/xujin/projects/hongguo-desktop';
+const ROOT = '~/projects/hongguo-desktop';
 const EVD = path.join(ROOT, 'test', 'evidence', 'smoke', 'r2');
 const SHOTS = path.join(EVD, 'screenshots');
 fs.mkdirSync(SHOTS, { recursive: true });
