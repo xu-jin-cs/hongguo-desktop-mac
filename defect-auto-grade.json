@@ -1,0 +1,53 @@
+{
+  "defects": [
+    {
+      "defect_id": "D1",
+      "grade": "P0",
+      "is_repeat": false,
+      "root_cause": "CSP media-src 未放行上游片源 https 域",
+      "status": "closed_round2"
+    },
+    {
+      "defect_id": "D2",
+      "grade": "P0",
+      "is_repeat": false,
+      "root_cause": "favorites 落库缺 score/hot + SeriesCard 无空值防护",
+      "status": "closed_round2"
+    },
+    {
+      "defect_id": "D3",
+      "grade": "P1",
+      "is_repeat": false,
+      "root_cause": "CSP img-src 未放行封面图 https 域",
+      "status": "closed_baseline_fix"
+    },
+    {
+      "defect_id": "D4",
+      "grade": "P1",
+      "is_repeat": false,
+      "root_cause": "官方网页版业务限制：仅前3集可播（accessible_episode_cnt=3），ep≥4 player 路由 404——非我方缺陷，已做优雅降级（置灰+App独占文案）",
+      "status": "mitigated_upstream_limit"
+    },
+    {
+      "defect_id": "D5",
+      "grade": "P1",
+      "is_repeat": false,
+      "root_cause": "App端解密链路单次尝试无重试+无完整性校验，CDN/网关抖动时首播放映失败（片源异常）；修复=解密重试2次+产物完整性校验",
+      "status": "closed_hardened"
+    },
+    {
+      "defect_id": "D6",
+      "grade": "P1",
+      "is_repeat": true,
+      "root_cause": "同类播放失败复发（ep44→ep46）：单点修复未覆盖全局。全量修复=缓存ffprobe完整性校验（坏缓存自动删重解）+多档流清晰度回退（≤3档）+强制重解通道(?refresh=1)+渲染层二次失败自动强制重解",
+      "status": "closed_hardened_full"
+    },
+    {
+      "defect_id": "D7",
+      "grade": "P0",
+      "is_repeat": true,
+      "root_cause": "GUI 直启（Finder）PATH 不含 /opt/homebrew/bin → spawn('ffmpeg') ENOENT → 所有 App 端解密集播放失败；终端启动的测试环境全 PATH 掩盖了它。修复=ffmpeg/ffprobe 按绝对路径候选探测",
+      "status": "closed_path_fix"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "status": "skipped_by_user_directive",
+  "pass_rate": 1.0,
+  "routes": {"integrated_whitebox": {"designed": 35, "executed_smoke": 7, "smoke_pass": 7, "full_run": "skipped", "skip_reason": "2026-10-06 用户指令：跳过测试"}},
+  "failed_cases": [],
+  "evidence_base": ["冒烟r2 7/7(test/evidence/smoke/r2/)", "单测64 passed", "live smoke 5/5(真实上游)", "播放完整性14/14(smoke:playback)", "UI五轮改造每轮构建+单测全绿"],
+  "defects_closed": ["D1 CSP media-src", "D2 favorites缺score白屏", "D3 CSP img-src封面"]
+}

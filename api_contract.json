@@ -1,0 +1,16 @@
+{
+  "status": "frozen",
+  "version": "1.0",
+  "base": "http://127.0.0.1:<port>/api",
+  "envelope": {"code": "0成功|400参数错|404不存在|502上游异常|504上游超时", "msg": "string", "data": "any"},
+  "endpoints": [
+    {"path": "/api/home", "method": "GET", "params": {"page": "int默认1", "size": "int默认20,max50"}, "data": {"list": [{"series_id": "string", "title": "string", "cover": "url", "hot": "number", "score": "number", "total_episodes": "int", "latest_episode": "int"}], "has_more": "bool"}},
+    {"path": "/api/category", "method": "GET", "params": {"type": "enum real|comic|ai|manga", "page": "int", "size": "int"}, "data": "同 /api/home"},
+    {"path": "/api/rank", "method": "GET", "params": {"board": "enum hot|new|real|comic", "size": "int≤50"}, "data": {"list": "同卡片+rank:int"}},
+    {"path": "/api/search", "method": "GET", "params": {"q": "string 1-50必填", "page": "int", "size": "int"}, "data": "同 /api/home"},
+    {"path": "/api/series", "method": "GET", "params": {"series_id": "string必填"}, "data": {"series_id": "string", "title": "string", "cover": "url", "desc": "string", "hot": "number", "score": "number", "total_episodes": "int", "episodes": [{"ep": "int", "seq": "int", "title": "string", "duration": "int秒", "playable": "bool"}]}},
+    {"path": "/api/play", "method": "GET", "params": {"series_id": "string", "ep": "int 1..total_episodes"}, "data": {"play_url": "hls url", "duration": "int", "next_ep": "int|null", "prev_ep": "int|null"}},
+    {"path": "/api/favorites", "method": "GET|POST|DELETE", "params": {"series_id": "string(POST/DELETE)"}, "data": {"list": "收藏卡片数组"}},
+    {"path": "/api/history", "method": "GET|POST|DELETE", "params": {"series_id": "string", "ep": "int", "progress_sec": "int 0-86400"}, "data": {"list": [{"series_id": "string", "title": "string", "cover": "url", "ep": "int", "progress_sec": "int", "updated_at": "int"}]}}
+  ]
+}

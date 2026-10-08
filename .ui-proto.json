@@ -1,0 +1,35 @@
+{
+  "version": "1.0",
+  "project": "hongguo-desktop",
+  "note": "组件id = data-testid 唯一来源（UI 测试取值优先级 data-testid > id > name > xpath）",
+  "pages": {
+    "home": {"components": ["nav-home", "nav-category", "nav-rank", "nav-search", "nav-library", "search-input", "series-card", "retry-btn"]},
+    "category": {"components": ["series-card", "retry-btn"]},
+    "rank": {"components": ["series-card"]},
+    "search": {"components": ["search-input", "search-submit", "series-card", "retry-btn"]},
+    "detail": {"components": ["ep-btn", "fav-btn", "retry-btn"]},
+    "player": {"components": ["player-core", "player-prev", "player-next", "player-rate", "player-progress", "player-close"]},
+    "library": {"components": ["fav-btn", "history-item"]}
+  },
+  "field_constraints_source": "interaction_design.md §10",
+  "components_registry": [
+    {"id": "nav-home", "type": "menu-item", "interactive": true, "page": "home"},
+    {"id": "nav-category", "type": "menu-item", "interactive": true, "page": "home"},
+    {"id": "nav-rank", "type": "menu-item", "interactive": true, "page": "home"},
+    {"id": "nav-search", "type": "menu-item", "interactive": true, "page": "home"},
+    {"id": "nav-library", "type": "menu-item", "interactive": true, "page": "home"},
+    {"id": "search-input", "type": "input", "interactive": true, "page": "search"},
+    {"id": "search-submit", "type": "button", "interactive": true, "page": "search"},
+    {"id": "series-card", "type": "button", "interactive": true, "page": "home"},
+    {"id": "ep-btn", "type": "button", "interactive": true, "page": "detail"},
+    {"id": "fav-btn", "type": "button", "interactive": true, "page": "detail"},
+    {"id": "player-core", "type": "button", "interactive": true, "page": "player"},
+    {"id": "player-prev", "type": "button", "interactive": true, "page": "player"},
+    {"id": "player-next", "type": "button", "interactive": true, "page": "player"},
+    {"id": "player-rate", "type": "button", "interactive": true, "page": "player"},
+    {"id": "player-progress", "type": "slider", "interactive": true, "page": "player"},
+    {"id": "player-close", "type": "button", "interactive": true, "page": "player"},
+    {"id": "retry-btn", "type": "button", "interactive": true, "page": "home"},
+    {"id": "history-item", "type": "button", "interactive": true, "page": "library"}
+  ]
+}

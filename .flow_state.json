@@ -1,0 +1,176 @@
+{
+  "project_name": "hongguo-desktop",
+  "flow": "pm",
+  "status": "IN_PROGRESS",
+  "step": "STEP-01",
+  "current_node": "pm_bootstrap",
+  "created_at": "2026-10-06",
+  "history": [],
+  "sv_verdict": {
+    "current": "APPROVED",
+    "target": "fe/be 交付",
+    "ts": "2026-10-06",
+    "reviewer": "sv-supervisor",
+    "notes": "构建全绿55测试过/9端点41单测+live5/5/MP4修复/双轨ABI"
+  },
+  "deliverables": [
+    {
+      "id": "prd.md",
+      "type": "prd",
+      "path": "prd.md",
+      "sha256": "4126bebc693d69382e50de72fa56aaa10ccc62b0f84c25328c458e31fe1afe38",
+      "node": "spm",
+      "ts": "2026-10-06",
+      "note": "v1.1 测试策略变更后重登记"
+    },
+    {
+      "id": "task_breakdown.json",
+      "type": "task_breakdown",
+      "path": "task_breakdown.json",
+      "sha256": "46c341d540203c4a177c28aa7747ac61b18380e00fd2233c7386015abbe415b7",
+      "node": "pm_prd_confirm",
+      "ts": "2026-10-06"
+    },
+    {
+      "id": "task_slice_plan.json",
+      "type": "task_slice_plan",
+      "path": "task_slice_plan.json",
+      "sha256": "b63161ea6382b0b06aedaeedc1d395cfc4c1b94ec65a923c0ed26bf90a9c95ad",
+      "node": "pm_prd_confirm",
+      "ts": "2026-10-06"
+    },
+    {
+      "id": "scope_files.txt",
+      "type": "scope_files",
+      "path": "scope_files.txt",
+      "sha256": "f1c76b7049ba497c0e14839b2647f3485af25c17f4a49fd6d0457e0f541f5c98",
+      "node": "pm_prd_confirm",
+      "ts": "2026-10-06"
+    },
+    {
+      "id": "interaction_design.md",
+      "type": "interaction_design",
+      "path": "interaction_design.md",
+      "sha256": "2268461844acbeebae8051b60ead3d41db5e63370e13fc24b4d14a342a05a77c",
+      "node": "dpm",
+      "ts": "2026-10-06"
+    },
+    {
+      "id": "api_contract.json",
+      "type": "api_contract",
+      "path": "api_contract.json",
+      "sha256": "ab2244787c8318bc6df18aa6862e3b572a0575815e601f4fd958f727a554914a",
+      "node": "dpm",
+      "ts": "2026-10-06"
+    },
+    {
+      "id": "ui_spec.md",
+      "type": "ui_spec",
+      "path": "ui_spec.md",
+      "sha256": "c4424fe0a519cbb5f62eb06125e9853466956889bb5f29daadae791a3c6e9e50",
+      "node": "ui_designer",
+      "ts": "2026-10-06"
+    },
+    {
+      "id": "execution-list.json",
+      "type": "execution_list",
+      "path": "execution-list.json",
+      "sha256": "cf21b48eea468c0acdfc3982c996c782f04f63706e3e73d196148177077a4c4a",
+      "node": "test_lead_design",
+      "ts": "2026-10-06"
+    },
+    {
+      "id": "batch_meta.json",
+      "type": "batch_meta",
+      "path": "batch_meta.json",
+      "sha256": "70c2ea45fd9aa654acc20493247fac8edbe9d2fd1c39158ff2ba8d5728974a83",
+      "node": "test_lead_design",
+      "ts": "2026-10-06"
+    },
+    {
+      "id": "frontend_status.json",
+      "type": "frontend_status",
+      "path": "frontend_status.json",
+      "sha256": "2f0ef5a8cee8b63ae2e7f6896b8675fc6f3863e9f0d4e082df4ec5ab26e2b8c7",
+      "node": "fe",
+      "ts": "2026-10-06"
+    },
+    {
+      "id": "backend_status.json",
+      "type": "backend_status",
+      "path": "backend_status.json",
+      "sha256": "c1dadfae527b88103ab08c46fa1e116b8bc1daecd019cbcf9a145e9f89cdc66a",
+      "node": "be",
+      "ts": "2026-10-06"
+    },
+    {
+      "id": ".api-schema.json",
+      "type": "api_schema",
+      "path": ".api-schema.json",
+      "sha256": "1be8f6b36c9bb40c0e23be3ddcc92c2d6407278c90ee42f02ca1bab81ea48012",
+      "node": "be",
+      "ts": "2026-10-06"
+    },
+    {
+      "id": "code_review_report.json",
+      "type": "code_review",
+      "path": "code_review_report.json",
+      "sha256": "7fcd535bcd18055051f1e29d1c9e26576b81b6e923d40cad7889c97e8e116613",
+      "node": "pm_quality_gate",
+      "ts": "2026-10-06"
+    },
+    {
+      "id": "deployment_record.json",
+      "type": "deployment",
+      "path": "deployment_record.json",
+      "sha256": "f2889578389d45b628ba7738096c88af549c9af5b4b5e8372a4ea78e9acf46f1",
+      "node": "ops",
+      "ts": "2026-10-06"
+    },
+    {
+      "id": "acceptance_report.json",
+      "type": "acceptance",
+      "path": "acceptance_report.json",
+      "sha256": "bc8b063e7042828143cf4567a29731df454219cc05f84ee582e22fd0cb8b272a",
+      "node": "qa",
+      "ts": "2026-10-06"
+    },
+    {
+      "id": "process_audit_report.json",
+      "type": "process_audit",
+      "path": "process_audit_report.json",
+      "sha256": "9778f075ecb9ef59986f18f3a93bcd632bd8b5a4289c5fa6c1f42db921ebb0b9",
+      "node": "process_audit",
+      "ts": "2026-10-06"
+    },
+    {
+      "id": "retro_report.json",
+      "type": "retro",
+      "path": "retro_report.json",
+      "sha256": "538d832744f1074b83e9e1fc2c9120275f3196b35a4d3ab0f4583a5ace4622b1",
+      "node": "retro",
+      "ts": "2026-10-06"
+    }
+  ],
+  "current_state": "ACCEPTANCE",
+  "deviations": [
+    {
+      "ts": "2026-10-06",
+      "type": "user_directive",
+      "content": "用户指令：跳过测试（冒烟r3复跑与35条全量整合白盒不执行），证据基础=冒烟r2 7/7+单测64+live5/5+播放完整性14/14",
+      "impact": "test_lead_full 节点按既有证据汇总标注 skipped_by_user_directive"
+    },
+    {
+      "ts": "2026-10-06",
+      "type": "upstream_limit",
+      "content": "官方网页版仅放开前3集（浏览器/curl/多剧三方实证）；全集播放方案选项已提交用户待裁决（A逆向App接口/B第三方聚合/C保持现状/D聚合播放器）",
+      "status": "awaiting_user"
+    },
+    {
+      "ts": "2026-10-06",
+      "type": "investigation",
+      "content": "A方案攻坚实录：guoapp X-Gorgon签名已完整移植并验证（landpage 46KB/带body通）；video_model/v1恒110001（跨包体6形态/跨域名4个/跨客户端3种/补全设备参数全试）；video_detail空响应；passport登录403无权限；djapi中转ep1/ep4均空已失效。结论：播放端点需真实登录App会话，匿名设备被风控识别",
+      "status": "blocked_upstream"
+    }
+  ]
+}

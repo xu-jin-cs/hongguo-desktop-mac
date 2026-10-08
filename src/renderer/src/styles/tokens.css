@@ -1,0 +1,104 @@
+/* ==========================================================================
+   ui_spec.md Token 落地（唯一视觉真源，数值化，禁止硬编码新色值）
+   ========================================================================== */
+
+:root {
+  /* §1.1 三层背景 */
+  --bg-l0: #0c0e12;
+  --bg-l1: #161a22;
+  --bg-l2: #202633;
+  --scrim-modal: rgba(6, 8, 12, 0.64);
+  --scrim-player-top: linear-gradient(180deg, rgba(0, 0, 0, 0.56) 0%, rgba(0, 0, 0, 0) 100%);
+  --scrim-player-bottom: linear-gradient(0deg, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0) 100%);
+
+  /* §1.2 文本色 */
+  --text-primary: #f3f5f9;
+  --text-secondary: #a7aebe;
+  --text-tertiary: #6e7686;
+  --text-inverse: #14161b;
+  --text-on-accent: #ffffff;
+
+  /* §1.3 品牌与业务色 */
+  --accent-fill: #e03050;
+  --accent-fill-hover: #f03a5b;
+  --accent-fill-pressed: #c42444;
+  --accent-fill-disabled: #4a2129;
+  --accent-fill-disabled-text: #8a6a72;
+  --accent-bright: #ff4d6a;
+  --heat-orange: #ff8a3d;
+  --rating-gold: #ffc24b;
+  --state-success: #34d399;
+  --state-warning: #fbbf24;
+  --state-error: #ff5c5c;
+  --state-info: #5ca8ff;
+  --focus-ring: #ff4d6a;
+
+  /* §1.4 描边与分割线 */
+  --border-hairline: 1px solid rgba(255, 255, 255, 0.06);
+  --border-strong: 1px solid rgba(255, 255, 255, 0.12);
+  --border-accent: 1px solid #e03050;
+  --border-error: 1px solid #ff5c5c;
+
+  /* §1.5 骨架屏 */
+  --skeleton-base: #1a1f28;
+  --skeleton-shimmer: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+
+  /* §2 字体 */
+  --font-stack: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei',
+    sans-serif;
+
+  /* §3 间距（4px 栅格） */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 48px;
+
+  /* §3 页面级固定值 */
+  --sidebar-w: 200px;
+  --content-pad: 24px;
+  --card-w: 168px;
+  --card-cover-w: 168px;
+  --card-cover-h: 224px;
+  --grid-gap: 16px;
+
+  /* §4 圆角 */
+  --radius-1: 4px;
+  --radius-2: 6px;
+  --radius-3: 8px;
+  --radius-4: 12px;
+  --radius-5: 16px;
+  --radius-pill-22: 22px;
+  --radius-full: 999px;
+
+  /* §5 阴影 */
+  --shadow-1: 0 1px 2px 0 rgba(0, 0, 0, 0.32);
+  --shadow-2: 0 4px 12px 0 rgba(0, 0, 0, 0.4);
+  --shadow-3: 0 8px 24px 0 rgba(0, 0, 0, 0.48);
+  --shadow-4: 0 16px 48px 0 rgba(0, 0, 0, 0.56);
+
+  /* §5 Z-index 字典 */
+  --z-content: 0;
+  --z-sticky: 100;
+  --z-dropdown: 200;
+  --z-player: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+  --z-offline: 550;
+
+  /* §5 动效 */
+  --motion-hover: 150ms ease-out;
+  --motion-float: 200ms ease-out;
+  --motion-fold: 250ms ease-in-out;
+  --motion-page: 300ms ease-in-out;
+  --motion-max: 1000ms;
+}

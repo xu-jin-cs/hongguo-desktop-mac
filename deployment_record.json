@@ -1,0 +1,6 @@
+{
+  "status": "deployed",
+  "version": "v1.0.0",
+  "backup_path": "dist/hongguo-desktop-v1.0.0-mac-arm64.zip",
+  "verification_result": "打包应用启动验证通过：title=红果短剧，数据层真实启动（HG_PORT>0），含跨季连播最新代码；本地零下载组装（复用 node_modules Electron），未拉远端镜像"
+}

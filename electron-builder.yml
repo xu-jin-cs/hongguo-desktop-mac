@@ -1,0 +1,23 @@
+# electron-builder 配置（T-010 打包；macOS arm64 优先，win target 预留不实机验证）
+appId: local.hongguo.desktop
+productName: 红果短剧
+directories:
+  output: dist
+files:
+  - out/**
+asar: true
+mac:
+  category: public.app-category.entertainment
+  target:
+    - target: dmg
+      arch: [arm64]
+    - target: zip
+      arch: [arm64]
+win:
+  target:
+    - nsis
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+# 个人本地使用，不分发；不配置 publish
+publish: null

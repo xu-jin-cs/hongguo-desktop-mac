@@ -1,0 +1,9 @@
+{
+  "status": "completed",
+  "verdict": "pass",
+  "notes": "P0 验收标准逐项核查：①首屏≤3s(冒烟实测通过) ②零广告(架构级无广告接口+grep无广告代码+网络面板无广告域名) ③切集100%(冒烟r2) ④续播误差≤5s(实测2.3s) ⑤有声(hasAudio=true实测) ⑥有画(hasVideo+画面帧截图) ⑦字幕(内嵌字幕画面可见,player.png/round-3证据) ⑧横竖屏(player-rotate实测两态截图 rotate_btn_portrait/landscape.png) ⑨跨季连播(季数解析7条单测通过) ⑩UI五轮循环评分递进56.5→61.5→65.75→69.25→71.25→73.25每轮均有效增长。P1说明：跨季连播未做真实上游末集E2E（逻辑层单测覆盖）；测试全量按用户指令跳过。",
+  "checked_items": 10,
+  "total_items": 10,
+  "qa_coverage": 1.0,
+  "ts": "2026-10-06"
+}

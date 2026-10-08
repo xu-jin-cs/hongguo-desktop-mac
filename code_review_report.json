@@ -1,0 +1,57 @@
+{
+  "status": "pass",
+  "issues": [
+    {
+      "severity": "P0",
+      "file": "src/main/index.ts",
+      "desc": "数据层在打包/dev 运行时永不启动：resolveDataLayerPort 用 nodeRequire(__dirname/server/index.js) + existsSync 动态加载 server，但 electron-vite 构建只产出 out/main/index.js（server 无任何静态 import 被 tree-shake，实测 out/main/server 不存在）；兜底 .hg-port 也只有 server 启动后才会写。净效果：真实数据层（upstream/store 全部实现）是运行期死代码，应用永远静默回落 mock。README/DEPS 自标注『be 落地后应改静态 import』但未执行。修法：src/main/index.ts 改为静态 import { startDataLayer } from './server'（ electron-vite 会一并打包），删除运行时 require 兜底。"
+    },
+    {
+      "severity": "P1",
+      "file": "src/renderer/src/api/dataSource.ts",
+      "desc": "addFavorite()/postHistory() 只 POST {series_id[,ep,progress_sec]}，不传 title/cover/total_episodes；真实模式下 store 落库 title/cover 为空串（首次插入后 upsert 的 CASE WHEN excluded.title!='' 保护使空值永远存在），Library 收藏卡片无封面无标题、历史行标题空白、HistoryRow 封面缺失。契约 /api/favorites data 为『收藏卡片数组』，渲染层依赖 title/cover。mock 模式从 mockSeriesAll 回填元数据，自测恰好掩盖该缺陷。修法：调用点（Detail.tsx toggleFav、Player.tsx postProgress）携带 title/cover/total_episodes。"
+    },
+    {
+      "severity": "P1",
+      "file": "src/renderer/src/api/dataSource.ts",
+      "desc": "serviceReachable() 探活判定 serviceDown=!res.ok：本地数据层上游故障返回 502/504 时被误判为『服务不可达』，整会话静默回落 mock——直接绕过自身注释契约『业务错误码(400/404/502/504)→抛 ApiError 不回落 mock』与 interaction §5/§6 的 502→『片源异常』+重试、504→『网络超时』状态机，用户看到假数据而非错误态。且 serviceDown 一旦置 true 永不重新探测，数据层恢复后无法切回。修法：探活只看网络可达性（fetch 是否抛异常），HTTP 有响应即视为可达；serviceDown 增加重探测或 TTL。"
+    },
+    {
+      "severity": "P2",
+      "file": "src/renderer/src/api/dataSource.ts",
+      "desc": "探活用 /api/home?page=1&size=1 会触发真实上游抓取（300ms 节流+公网往返），PROBE_TIMEOUT_MS=1500 冷启动偏紧：上游首抓稍慢即误判不可达并回落 mock。建议加专用轻量探活端点（如 /api/health 不触上游）。"
+    },
+    {
+      "severity": "P2",
+      "file": "src/renderer/src/api/mock.ts",
+      "desc": "mock 播放地址 MOCK_HLS 是 .m3u8（走 Player hls.js 分支），而 NOTES.md 实测上游全为渐进式 MP4（走 video.src 分支）：mock 自测从未演练生产实际走的 MP4 attach 路径，fe 自测覆盖与生产路径错配。建议 mock 改用 MP4 直链样本，保证两分支都被自测覆盖。"
+    },
+    {
+      "severity": "P2",
+      "file": "src/main/server/app.ts",
+      "desc": "本地数据层 CORS 为 Access-Control-Allow-Origin: *，任意网页（含恶意站点）均可跨域读写 127.0.0.1 数据层（含 DELETE 收藏/历史、读取观看记录）。随机端口与仅绑 127.0.0.1 只是缓解。建议校验 Origin 仅放行 null/file://（Electron renderer），其余拒绝。"
+    },
+    {
+      "severity": "P3",
+      "file": "README.md",
+      "desc": "文档过期：架构图仍标注 server/upstream/store 为『【be 填充】』、技术栈行写『本地存储 better-sqlite3 由后端任务接入』，与 be 已交付的现状不符；且未提示 prod 数据层未接线风险（见 P0）。"
+    },
+    {
+      "severity": "P3",
+      "file": "interaction_design.md",
+      "desc": "§10 字段约束表 progress_sec 写『越界截断至 [0,duration]』，实现（validate.ts parseProgressSec）按 api_contract 截断至 [0,86400]；api_contract 为唯一基线，文档与基线不一致需修订。"
+    },
+    {
+      "severity": "P3",
+      "file": "src/renderer/src/api/mock.ts",
+      "desc": "MOCK_HLS 指向公网 test-streams.mux.dev，与文件头『零网络依赖』注释矛盾；mock 模式离线时播放不可用。"
+    },
+    {
+      "severity": "P3",
+      "file": "src/renderer/src/pages/Player.tsx",
+      "desc": "MP4 渐进式分支（生产唯一真实路径）attach 逻辑核查通过（src 直挂+onloadedmetadata/onerror+fatal 自动重试 1 次→error 态），但 NOTES.md 实测上游无 HLS，hls.js 分支为死代码（增加约 500KB 包体积）；另 postProgress 的 .catch(()=>{}) 进度落库失败完全静默，无补偿机制（5s 周期可容忍，建议至少 console.warn）。"
+    }
+  ],
+  "conclusion": "R2 复核：P0（数据层静态接线，运行时实测 53383 端口真实服务）/P1×2（写操作元数据、502/504不误判回落+30s TTL重探测）均已修复并验证；残余 P2×3/P3×4 转优化项不阻断。",
+  "round": 2
+}

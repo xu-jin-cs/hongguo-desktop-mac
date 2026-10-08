@@ -1,0 +1,11 @@
+{
+  "size_gear": "M",
+  "enable_clone": false,
+  "slice_list": [
+    {"slice": "S1 数据基座", "tasks": ["T-001", "T-002", "T-003", "T-004"], "note": "脚手架+upstream+本地服务+存储，串行"},
+    {"slice": "S2 界面链路", "tasks": ["T-005", "T-006", "T-007", "T-009"], "note": "T-005 可与 S1 并行；T-006/007 依赖 T-003"},
+    {"slice": "S3 播放核心", "tasks": ["T-008"], "note": "依赖 S1+T-007"},
+    {"slice": "S4 出包", "tasks": ["T-010"], "note": "收尾"}
+  ],
+  "merge_requirement": "T-005 启动不依赖 T-003（mock 数据先行），联调在 T-006/T-008 收口；范围边界以 scope_files.txt 为准"
+}

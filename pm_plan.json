@@ -1,0 +1,11 @@
+{
+  "project_name": "hongguo-desktop",
+  "flow_type": "流程A（全新项目全流程）",
+  "size_gear": "M",
+  "assigned_roles": ["pm", "spm", "dpm", "ui_designer", "test_lead", "fe", "be", "ops", "qa", "process_audit"],
+  "next_steps": ["spm 需求分析（停点1 用户确认方向）", "task_breakdown 任务拆解", "dpm 交互设计", "并行组 ui_designer ∥ test_lead_design", "fe/be 开发", "质量门禁与三路测试", "部署验收归档"],
+  "archmap_analysis": null,
+  "archmap_note": "全新空白项目，无存量代码，按契约置 null",
+  "requirement_raw": "将红果短剧app变成电脑桌面版，可以做成web或者客户端的形式。挑选复刻完整度最高，且能过滤广告的方式开发。",
+  "gear_reason": "单壳桌面应用+广告过滤层，无复杂业务域，但涉及客户端工程化与网络过滤两个技术面，定档 M"
+}

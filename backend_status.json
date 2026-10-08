@@ -1,0 +1,41 @@
+{
+  "role": "backend-engineer",
+  "tasks": [
+    "T-002",
+    "T-003",
+    "T-004"
+  ],
+  "status": "done",
+  "deliverables": [
+    "src/main/upstream/types.ts",
+    "src/main/upstream/errors.ts",
+    "src/main/upstream/throttle.ts",
+    "src/main/upstream/cache.ts",
+    "src/main/upstream/routerData.ts",
+    "src/main/upstream/schema.ts",
+    "src/main/upstream/client.ts",
+    "src/main/upstream/index.ts",
+    "src/main/upstream/NOTES.md",
+    "src/main/store/store.ts",
+    "src/main/store/index.ts",
+    "src/main/store/better-sqlite3.d.ts",
+    "src/main/server/validate.ts",
+    "src/main/server/app.ts",
+    "src/main/server/index.ts",
+    "src/main/server/DEPS.md",
+    "test/upstream.test.ts",
+    "test/server.test.ts",
+    "test/store.test.ts",
+    "test/live-smoke.test.ts",
+    ".api-schema.json"
+  ],
+  "smoke_result": "{\"unit\": \"vitest 3 文件 41/41 通过（upstream 15 / server 19 / store 7）\", \"live_smoke\": \"HG_LIVE_SMOKE=1 真实上游 5/5 通过（home/category×4/search/series→play 全链/rank×4）\", \"typecheck\": \"tsc --noEmit 0 error（strict，全仓）\", \"zero_ad_grep\": \"src/main 无任何广告/激励/tracking 域名与逻辑（仅合规注释命中关键词）\", \"be_api_schema_gate\": \"exit 0 判 A（2026-10-06）\", \"note\": \"zod@3.25.76 / better-sqlite3@12.11.1 未进 package.json（并行约定禁改），已手工置 node_modules 供自测，合并口径见 src/main/server/DEPS.md；better-sqlite3 为原生模块，Electron 运行前需 electron-rebuild（DEPS.md 已写明）\"}",
+  "upstream_findings": "见 src/main/upstream/NOTES.md：官方无公开 JSON API，数据载体为 SSR 页 _ROUTER_DATA；播放地址实测为 MP4 签名直链（非 HLS）；搜索上游只回前 10 条；rank 站页 SSR content 为空，hot/real/comic 映射首页 section、new 由四分类 create_time 倒序合成",
+  "known_gaps": [
+    "fe 侧 test/dataSource.test.ts 有 1 条预存失败（ApiError instanceof 双例问题，位于 src/renderer/src/api/*，与 be 交付物无引用关系，归 fe 修复）",
+    "播放地址为 MP4 而非契约假设的 HLS，hls.js 对本站点非必需（NOTES.md 已记录，fe 播放器可用原生 <video>）",
+    "/api/series 的 episodes[].duration 上游详情页不提供，恒 0；起播后由 /api/play duration 提供",
+    "/api/search 上游仅回前 10 条，has_more 恒 false",
+    ".hg-port 未加入 .gitignore（fe/ops 收口时处理）"
+  ]
+}

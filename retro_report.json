@@ -1,0 +1,15 @@
+{
+  "status": "completed",
+  "lessons": [
+    {"q": "发生了什么", "a": "全流程交付红果短剧桌面版；冒烟发现3个真实缺陷（CSP media-src/img-src、favorites缺字段白屏）"},
+    {"q": "为什么发生", "a": "开发期用mock/公共测试流验证，未用真实上游媒体域集成；schema演进时消费方无防护"},
+    {"q": "教训", "a": "①mock掩盖真实缺陷，真实集成冒烟必须尽早（CSP类问题单测不可见）②Electron原生模块Node/Electron ABI双轨需基建化 ③UI递进改造必须冻结基线+评分卡否则不可证伪"},
+    {"q": "预防", "a": "冒烟用例含真实上游起播断言；schema变更伴随消费方防护检查单；UI循环机制（评分卡+轮阈值+回滚）已成型可复用"},
+    {"q": "落地", "a": "本复盘经验经retro-skill-dispatcher GENERATE入库"}
+  ],
+  "action_items": [
+    "经验入库：真实集成冒烟前置（mock掩盖CSP类缺陷）",
+    "经验入库：Electron原生模块双轨ABI基建（vitest alias vendor目录）",
+    "经验入库：UI递进改造三件套（冻结基线/评分卡双评/失败回滚）"
+  ]
+}

@@ -1,0 +1,296 @@
+{
+ "status": "fail",
+ "round": 3,
+ "pass_rate": 0.4286,
+ "pass_rate_formula": "round3 全量复跑 pass 3 / 7 = 0.4286（全量轮，不再与 r1/r2 分轮合并）",
+ "failed_modules": [
+  "local_service_router",
+  "upstream_adapter",
+  "store_rw"
+ ],
+ "global_batch_id": "GB-HG-WB-20261006-001",
+ "hg_port": 54665,
+ "head_commit": "316fed0 ui-loop R5 评分73.25(+2.0)·五轮闭环 56.5→73.25",
+ "playback_smoke_ref": "pnpm smoke:playback 14/14 pass（test/evidence/playback/playback_evidence.json，2026-10-06 15:19 产，引用不重跑）",
+ "round1_summary": {
+  "round": 1,
+  "status": "fail",
+  "pass_rate": 0.4286,
+  "verdicts": {
+   "TC-HG-001": "pass",
+   "TC-HG-002": "pass",
+   "TC-HG-003": "pass",
+   "TC-HG-004": "fail",
+   "TC-HG-005": "fail",
+   "TC-HG-006": "fail",
+   "TC-HG-007": "fail"
+  },
+  "defects": [
+   {
+    "defect_id": "D1",
+    "cases": [
+     "TC-HG-004"
+    ],
+    "title": "渲染层 CSP media-src 未放行上游 CDN 域 → 真实片源加载被拒 → 播放页「片源异常」，player-core 永不渲染（showBar 依赖 phase===ready）"
+   },
+   {
+    "defect_id": "D2",
+    "cases": [
+     "TC-HG-005",
+     "TC-HG-006",
+     "TC-HG-007"
+    ],
+    "title": "SeriesCard 渲染收藏项时 item.score 为 undefined，score.toFixed(1) 抛 TypeError → 渲染层整树崩溃白屏（无错误边界）"
+   }
+  ],
+  "fixed_by_commit": "8e17019 fix(流程B): D1 CSP放行媒体https域 + D2 favorites补score/hot+SeriesCard空值防护",
+  "evidence_dir": "test/evidence/smoke/（r1 原始证据）+ test/evidence/archive/smoke_20261006_1502_r1_3of7/（前次残留归档）",
+  "engine_evidence_chain": {
+   "first_submit": {
+    "code": "reject",
+    "trace_id": "b3-ev-bbb74517ba89",
+    "cause": "B3 门禁按 web func-only 模型（用例目录+逐步截图+目录内 md5 查重）解析；本批次为用例级截图粒度（7用例7图），且 TC-HG-005/006/007 三张白屏截图 md5 相同（渲染层崩溃后的真实缺陷现场，非证据复用）→ 结构性 reject"
+   },
+   "restructure": "按门禁契约将证据重组织为 cases/<case_id>/{manifest.json(case_id+granularity披露),audit.log,<case_id>.png}，根 manifest 改名 batch_manifest.json；原始文件零改动，白屏三图 md5 相同事实保留于本字段披露",
+   "second_submit": {
+    "code": "success",
+    "trace_id": "b3-ev-e0d687d4208c"
+   }
+  }
+ },
+ "round2_summary": {
+  "round": 2,
+  "status": "pass",
+  "pass_rate": 1,
+  "pass_rate_formula": "(round1 pass 3 + round2 pass 4) / 7 = 1",
+  "verdicts": {
+   "TC-HG-004": "pass",
+   "TC-HG-005": "pass",
+   "TC-HG-006": "pass",
+   "TC-HG-007": "pass"
+  },
+  "scope": "精准回归 round1 失败的 TC-HG-004/005/006/007（D1/D2 修复验证）",
+  "evidence_dir": "test/evidence/smoke/r2/"
+ },
+ "defect_closure": {
+  "D1": {
+   "closed": true,
+   "closed_round": 2,
+   "verified_by": "TC-HG-004（真实片源起播 + __HG_PLAYER_STATE__.hasVideo===true + currentTime 前进）",
+   "r3_reverified": false
+  },
+  "D2": {
+   "closed": true,
+   "closed_round": 2,
+   "verified_by": "TC-HG-005（收藏卡片标题+评分渲染、窗口内零 PAGEERROR、取消后列表移除）+ TC-HG-006/007（级联余波清零）",
+   "r3_reverified": false
+  }
+ },
+ "execution_notes": [
+  "round 3 全量复跑（单 Electron 实例，7 用例顺序执行，同 case_id 单执行）；背景=UI R1-R5 五轮改造（HEAD=316fed0）后确认功能链路未破坏；证据全新采集落 test/evidence/smoke/r3/，未复用 r1/r2。",
+  "执行前环境核验：out/ 构建与 HEAD 源码同步（16:31 同刻）；driver 依赖的 20 个 data-testid 与 .card-title/.meta-score/.history-resume/.tab-bar 类名在 R5 源码全部在位；空态文案「暂无收藏」与 deviation 口径一致。",
+  "执行前 DB 现状：favorites 空（TC-HG-005 首个 toggle=收藏语义成立）；history 残留 r2 的 1 条记录（TC-HG-006 自包含：用例内先播放再查顶行，残留不构成干扰）；无 Electron 残留实例。",
+  "TC-HG-004 沿用 round2 裁定断言：__HG_PLAYER_STATE__.hasVideo===true 且 currentTime>0 前进（真实片源，CSP media-src 已放行 https:）。",
+  "TC-HG-005 deviation 沿用：空态断 /暂无(收藏|内容)/；追加收藏卡片标题+评分可见断言与窗口内零 PAGEERROR 断言。",
+  "TC-HG-006 deviation×2 沿用：补「历史」tab 点击；history-item 点击落点取「续播」按钮；追加续播 URL ep 与 history 顶行 ep 一致性断言。",
+  "TC-HG-007 沿用 round2 追加：切「漫剧」tab 栅格重渲染断言 + 后端佐证（type=comic code=0）。"
+ ],
+ "details": [
+  {
+   "case_id": "TC-HG-001",
+   "verdict": "pass",
+   "evidence": "test/evidence/smoke/r3/TC-HG-001.png",
+   "steps_log": [
+    "OK step1 goto #/home",
+    "OK step2 wait  3000",
+    "OK step3 assert_visible series-card",
+    "OK step4 assert_visible nav-home"
+   ],
+   "backend_evidence": {
+    "endpoint": "GET /api/home?page=1&size=20",
+    "status": 200,
+    "code": 0,
+    "list_len": 20,
+    "has_more": true,
+    "fields_sample": [
+     "series_id",
+     "title",
+     "cover",
+     "hot",
+     "score",
+     "total_episodes",
+     "latest_episode"
+    ]
+   },
+   "backend_hit": [
+    "probe: GET /api/home?page=1&size=20"
+   ],
+   "notes": [],
+   "pageerror_in_window": 0,
+   "elapsed_ms": 3340
+  },
+  {
+   "case_id": "TC-HG-002",
+   "verdict": "pass",
+   "evidence": "test/evidence/smoke/r3/TC-HG-002.png",
+   "steps_log": [
+    "OK step1 goto #/home",
+    "OK step2 click nav-search",
+    "OK step3 input search-input 复仇",
+    "OK step4 click search-submit",
+    "OK step5 wait  3000",
+    "OK step6 assert_visible series-card",
+    "OK step7 assert_url  #/search"
+   ],
+   "backend_evidence": {
+    "endpoint": "GET /api/search?q=复仇&page=1&size=20",
+    "status": 200,
+    "code": 0,
+    "list_is_array": true,
+    "list_len": 10,
+    "has_more_type": "boolean",
+    "ui_first_title": "贵妃将我赎身钱送乞丐，重生后我夺回一切",
+    "ui_backend_consistent": true
+   },
+   "backend_hit": [
+    "GET /api/search?q=%E5%A4%8D%E4%BB%87&page=1&size=20 -> 200/code=0",
+    "probe: GET /api/search?q=复仇&page=1&size=20"
+   ],
+   "notes": [],
+   "pageerror_in_window": 0,
+   "elapsed_ms": 3412
+  },
+  {
+   "case_id": "TC-HG-003",
+   "verdict": "pass",
+   "evidence": "test/evidence/smoke/r3/TC-HG-003.png",
+   "steps_log": [
+    "OK step1 goto #/home",
+    "OK step2 wait  3000",
+    "OK step3 click series-card",
+    "OK step4 wait  2000",
+    "OK step5 assert_visible ep-btn",
+    "OK step6 assert_visible fav-btn"
+   ],
+   "backend_evidence": {
+    "endpoint": "GET /api/series?series_id=7690163276214176792",
+    "series_id": "7690163276214176792",
+    "status": 200,
+    "code": 0,
+    "total_episodes": 209,
+    "episodes_len": 209,
+    "ep0_keys": [
+     "ep",
+     "seq",
+     "title",
+     "duration",
+     "playable"
+    ]
+   },
+   "backend_hit": [
+    "GET /api/home?page=1&size=20 -> 200/code=0",
+    "GET /api/series?series_id=7690163276214176792 -> 200/code=0",
+    "GET /api/favorites -> 200/code=0",
+    "GET /api/history -> 200/code=0",
+    "probe: GET /api/series?series_id=7690163276214176792"
+   ],
+   "notes": [],
+   "pageerror_in_window": 0,
+   "elapsed_ms": 5355
+  },
+  {
+   "case_id": "TC-HG-004",
+   "verdict": "fail",
+   "evidence": "test/evidence/smoke/r3/TC-HG-004.png",
+   "steps_log": [
+    "OK step1 goto #/home",
+    "OK step2 wait  3000",
+    "OK step3 click series-card",
+    "OK step4 wait  2000",
+    "OK step5 click ep-btn",
+    "OK step6 wait  3000",
+    "OK step7 assert_visible player-core",
+    "OK step8 assert_url  #/player/"
+   ],
+   "backend_evidence": {
+    "endpoint": "GET /api/play?series_id=7690163276214176792&ep=1",
+    "series_id": "7690163276214176792",
+    "ep": 1,
+    "status": 200,
+    "code": 0,
+    "play_url": "https://v26-hgweb.qznovelvod.com/35585199bbe92376425aad4c13826eba/6ac4c376/video/tos/cn/tos-cn-v-6fcc8e/oEdXxWFcfID3f9QH",
+    "prev_ep": null,
+    "next_ep": 2,
+    "player_state_t1": null,
+    "player_state_t2": null,
+    "currentTime_advancing": false,
+    "page_text": "HG 红果短剧 首页 分类 排行 搜索 收藏/历史 万妖图录传第十三季 热度 9487.5万 评分 9.3 全209集 以妖魔之血为墨，以百妖谱为卷，可摹画其形，夺其神通。姜月初一朝醒来，却变身成了盛世大唐的一介少女；在这长安月下，繁华与腐朽共生，仙佛绝迹，妖魔横行；所幸斩杀生物便能增长道行，将妖魔一一绘入妖谱，化作自身的力量；姜月初开始了斩妖夺神通，以绝色之姿镇压万古妖魔之路，逐渐揭开这个世界的"
+   },
+   "backend_hit": [
+    "GET /api/home?page=1&size=20 -> 200/code=0",
+    "GET /api/favorites -> 200/code=0",
+    "GET /api/history -> 200/code=0",
+    "GET /api/play?series_id=7690163276214176792&ep=1 -> 200/code=0",
+    "probe: GET /api/play?series_id=7690163276214176792&ep=1"
+   ],
+   "notes": [],
+   "error": "__HG_PLAYER_STATE__ 不存在（Player 未进入播放采样态）",
+   "error_context": {
+    "hash": "#/detail/7690163276214176792",
+    "body_text": "HG 红果短剧 首页 分类 排行 搜索 收藏/历史 万妖图录传第十三季 热度 9487.5万 评分 9.3 全209集 以妖魔之血为墨，以百妖谱为卷，可摹画其形，夺其神通。姜月初一朝醒来，却变身成了盛世大唐的一介少女；在这长安月下，繁华与腐朽共生，仙佛绝迹，妖魔横行；所幸斩杀生物便能增长道行，将妖魔一一绘入妖谱，化作自身的力量；姜月初开始了斩妖夺神通，以绝色之姿镇压万古妖魔之路，逐渐揭开这个世界的迷雾。 收藏 选集 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 "
+   },
+   "pageerror_in_window": 0,
+   "elapsed_ms": 13320
+  },
+  {
+   "case_id": "TC-HG-005",
+   "verdict": "fail",
+   "evidence": null,
+   "steps_log": [],
+   "backend_evidence": null,
+   "backend_hit": [
+    "GET /api/home?page=1&size=20 -> 200/code=0"
+   ],
+   "notes": [
+    "backend probe(非严格) 异常: fetch failed",
+    "error_context 采集失败: page.evaluate: Target page, context or browser has been closed",
+    "screenshot failed: page.screenshot: Target page, context or browser has been closed"
+   ],
+   "error": "page.waitForTimeout: Application exited",
+   "pageerror_in_window": 0,
+   "elapsed_ms": 2086
+  },
+  {
+   "case_id": "TC-HG-006",
+   "verdict": "fail",
+   "evidence": null,
+   "steps_log": [],
+   "backend_evidence": null,
+   "backend_hit": [],
+   "notes": [
+    "backend probe(非严格) 异常: fetch failed",
+    "error_context 采集失败: page.evaluate: Target page, context or browser has been closed",
+    "screenshot failed: page.screenshot: Target page, context or browser has been closed"
+   ],
+   "error": "page.evaluate: Target page, context or browser has been closed",
+   "pageerror_in_window": 0,
+   "elapsed_ms": 4
+  },
+  {
+   "case_id": "TC-HG-007",
+   "verdict": "fail",
+   "evidence": null,
+   "steps_log": [],
+   "backend_evidence": null,
+   "backend_hit": [],
+   "notes": [
+    "backend probe(非严格) 异常: fetch failed",
+    "error_context 采集失败: page.evaluate: Target page, context or browser has been closed",
+    "screenshot failed: page.screenshot: Target page, context or browser has been closed"
+   ],
+   "error": "page.evaluate: Target page, context or browser has been closed",
+   "pageerror_in_window": 0,
+   "elapsed_ms": 4
+  }
+ ]
+}

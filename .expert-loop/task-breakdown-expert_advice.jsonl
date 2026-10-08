@@ -1,0 +1,2 @@
+{"ts":"2026-10-06","node":"pm_prd_confirm","slot":"SLOT-1","expert_id":"G08-E01","title":"任务拆解工程师","advice":"拆到能估时、能验收才算完——已满足：10任务全部带估时+可测验收","verdict":"accepted","applied":"task_breakdown.json 全字段"}
+{"ts":"2026-10-06","node":"pm_prd_confirm","slot":"SLOT-1","expert_id":"G08-E16","title":"多项目组合管家","advice":"什么都重要就等于什么都不重要——MVP聚焦P0播放链路，T-010打包最后","verdict":"accepted","applied":"依赖序 T-010 收尾"}

@@ -1,0 +1,2 @@
+{"ts":"2026-10-06","node":"dpm","slot":"SLOT-1","expert_id":"A07-E16","title":"安全架构评审师","advice":"每条线问可信吗——渲染层禁直连上游已落实，数据只经本地层","verdict":"accepted","applied":"interaction_design.md §8"}
+{"ts":"2026-10-06","node":"dpm","slot":"SLOT-1","expert_id":"B03-E16","title":"发布守门人","advice":"宁可慢一点不可带病上线——播放器起播成功率纳入P0冒烟","verdict":"accepted","applied":"PRD§9 冒烟集合"}

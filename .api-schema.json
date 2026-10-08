@@ -1,0 +1,194 @@
+{
+  "schema_version": "2.0",
+  "version": "1.0.0",
+  "generated_by": "backend-engineer (T-002/T-003/T-004)",
+  "base_url": "http://127.0.0.1:<port>（端口随机，启动后写入项目根 .hg-port）",
+  "envelope": {
+    "shape": {"code": "number", "msg": "string", "data": "any|null"},
+    "code_semantics": {"0": "成功", "400": "参数错误", "404": "不存在/未知路径/不可播", "502": "上游接口异常（含 zod 校验失败）", "504": "上游超时（8s，重试1次后仍失败）"},
+    "note": "HTTP 状态码与 envelope.code 一致（成功 200）"
+  },
+  "auth": "无鉴权（本地 127.0.0.1 环回服务，仅渲染进程消费）",
+  "endpoints": [
+    {
+      "path": "/api/home",
+      "method": "GET",
+      "module": {"major": "browse", "minor": "home", "feature": "推荐feed"},
+      "fields": [
+        {"name": "page", "in": "query", "required": false, "type": "int", "constraints": {"min": 1, "max": 10000, "default": 1, "on_invalid": 400}},
+        {"name": "size", "in": "query", "required": false, "type": "int", "constraints": {"min": 1, "max": 50, "default": 20, "on_invalid": 400}}
+      ],
+      "scenes_applicable": ["pagination", "upstream_error", "offline"],
+      "scenes_na": {"auth": "本地环回服务无鉴权"},
+      "response_schema_ref": "CardList"
+    },
+    {
+      "path": "/api/category",
+      "method": "GET",
+      "module": {"major": "browse", "minor": "category", "feature": "分类列表"},
+      "fields": [
+        {"name": "type", "in": "query", "required": true, "type": "enum", "constraints": {"enum": ["real", "comic", "ai", "manga"], "on_invalid": 400}},
+        {"name": "page", "in": "query", "required": false, "type": "int", "constraints": {"min": 1, "max": 10000, "default": 1, "on_invalid": 400}},
+        {"name": "size", "in": "query", "required": false, "type": "int", "constraints": {"min": 1, "max": 50, "default": 20, "on_invalid": 400}}
+      ],
+      "scenes_applicable": ["pagination", "enum_invalid", "upstream_error", "offline"],
+      "scenes_na": {"auth": "本地环回服务无鉴权"},
+      "response_schema_ref": "CardList"
+    },
+    {
+      "path": "/api/rank",
+      "method": "GET",
+      "module": {"major": "browse", "minor": "rank", "feature": "排行榜"},
+      "fields": [
+        {"name": "board", "in": "query", "required": true, "type": "enum", "constraints": {"enum": ["hot", "new", "real", "comic"], "on_invalid": 400}},
+        {"name": "size", "in": "query", "required": false, "type": "int", "constraints": {"min": 1, "max": 50, "default": 20, "on_invalid": 400}}
+      ],
+      "scenes_applicable": ["enum_invalid", "upstream_error", "offline"],
+      "scenes_na": {"auth": "本地环回服务无鉴权", "pagination": "榜单无 page 参数，仅 size"},
+      "response_schema_ref": "RankList"
+    },
+    {
+      "path": "/api/search",
+      "method": "GET",
+      "module": {"major": "browse", "minor": "search", "feature": "关键词搜索"},
+      "fields": [
+        {"name": "q", "in": "query", "required": true, "type": "string", "constraints": {"min_len": 1, "max_len": 50, "trim": true, "on_invalid": 400}},
+        {"name": "page", "in": "query", "required": false, "type": "int", "constraints": {"min": 1, "max": 10000, "default": 1, "on_invalid": 400}},
+        {"name": "size", "in": "query", "required": false, "type": "int", "constraints": {"min": 1, "max": 50, "default": 20, "on_invalid": 400}}
+      ],
+      "scenes_applicable": ["empty_result", "upstream_error", "offline"],
+      "scenes_na": {"auth": "本地环回服务无鉴权", "pagination": "上游搜索只回前10条，has_more 恒 false（见 upstream/NOTES.md）"},
+      "response_schema_ref": "CardList"
+    },
+    {
+      "path": "/api/series",
+      "method": "GET",
+      "module": {"major": "detail", "minor": "series", "feature": "剧集详情+选集"},
+      "fields": [
+        {"name": "series_id", "in": "query", "required": true, "type": "string", "constraints": {"min_len": 1, "on_invalid": 400}}
+      ],
+      "scenes_applicable": ["not_found", "upstream_error", "offline"],
+      "scenes_na": {"auth": "本地环回服务无鉴权"},
+      "response_schema_ref": "SeriesDetail"
+    },
+    {
+      "path": "/api/play",
+      "method": "GET",
+      "module": {"major": "play", "minor": "play", "feature": "播放地址"},
+      "fields": [
+        {"name": "series_id", "in": "query", "required": true, "type": "string", "constraints": {"min_len": 1, "on_invalid": 400}},
+        {"name": "ep", "in": "query", "required": true, "type": "int", "constraints": {"min": 1, "max": "total_episodes（先查详情再校验）", "on_invalid": 400}}
+      ],
+      "scenes_applicable": ["ep_boundary", "not_found", "upstream_error", "offline"],
+      "scenes_na": {"auth": "本地环回服务无鉴权"},
+      "response_schema_ref": "PlayInfo",
+      "notes": "play_url 实测为渐进式 MP4 签名直链（上游未暴露 HLS，见 upstream/NOTES.md）"
+    },
+    {
+      "path": "/api/favorites",
+      "method": "GET",
+      "module": {"major": "library", "minor": "favorites", "feature": "收藏列表"},
+      "fields": [],
+      "scenes_applicable": ["empty_result", "offline"],
+      "scenes_na": {"auth": "本地环回服务无鉴权", "upstream_error": "纯本地存储不依赖上游"},
+      "response_schema_ref": "FavoriteList"
+    },
+    {
+      "path": "/api/favorites",
+      "method": "POST",
+      "module": {"major": "library", "minor": "favorites", "feature": "收藏新增"},
+      "fields": [
+        {"name": "series_id", "in": "body", "required": true, "type": "string", "constraints": {"min_len": 1, "on_invalid": 400}},
+        {"name": "title", "in": "body", "required": false, "type": "string", "constraints": {}},
+        {"name": "cover", "in": "body", "required": false, "type": "string", "constraints": {}},
+        {"name": "total_episodes", "in": "body", "required": false, "type": "int", "constraints": {"min": 0}}
+      ],
+      "scenes_applicable": ["idempotent_replay"],
+      "scenes_na": {"auth": "本地环回服务无鉴权", "upstream_error": "纯本地存储不依赖上游"},
+      "response_schema_ref": "FavoriteList",
+      "notes": "upsert 幂等：重复 POST 同 series_id 不产生重复行，created_at 保留首次值"
+    },
+    {
+      "path": "/api/favorites",
+      "method": "DELETE",
+      "module": {"major": "library", "minor": "favorites", "feature": "收藏删除"},
+      "fields": [
+        {"name": "series_id", "in": "body|query", "required": true, "type": "string", "constraints": {"min_len": 1, "on_invalid": 400}}
+      ],
+      "scenes_applicable": ["idempotent_replay"],
+      "scenes_na": {"auth": "本地环回服务无鉴权", "upstream_error": "纯本地存储不依赖上游"},
+      "response_schema_ref": "FavoriteList",
+      "notes": "删除不存在的 series_id 返回 code=0（幂等删除）"
+    },
+    {
+      "path": "/api/history",
+      "method": "GET",
+      "module": {"major": "library", "minor": "history", "feature": "观看历史"},
+      "fields": [],
+      "scenes_applicable": ["empty_result", "offline"],
+      "scenes_na": {"auth": "本地环回服务无鉴权", "upstream_error": "纯本地存储不依赖上游"},
+      "response_schema_ref": "HistoryList",
+      "notes": "按 updated_at DESC 倒序"
+    },
+    {
+      "path": "/api/history",
+      "method": "POST",
+      "module": {"major": "library", "minor": "history", "feature": "进度落库"},
+      "fields": [
+        {"name": "series_id", "in": "body", "required": true, "type": "string", "constraints": {"min_len": 1, "on_invalid": 400}},
+        {"name": "ep", "in": "body", "required": true, "type": "int", "constraints": {"min": 1, "max": 100000, "on_invalid": 400}},
+        {"name": "progress_sec", "in": "body", "required": true, "type": "int", "constraints": {"min": 0, "max": 86400, "on_out_of_range": "clamp（截断，不报400）", "on_non_int": 400}},
+        {"name": "title", "in": "body", "required": false, "type": "string", "constraints": {"note": "为空时不覆盖已有值"}},
+        {"name": "cover", "in": "body", "required": false, "type": "string", "constraints": {"note": "为空时不覆盖已有值"}}
+      ],
+      "scenes_applicable": ["idempotent_replay", "clamp"],
+      "scenes_na": {"auth": "本地环回服务无鉴权", "upstream_error": "纯本地存储不依赖上游"},
+      "response_schema_ref": "HistoryList"
+    },
+    {
+      "path": "/api/history",
+      "method": "DELETE",
+      "module": {"major": "library", "minor": "history", "feature": "历史删除"},
+      "fields": [
+        {"name": "series_id", "in": "body|query", "required": true, "type": "string", "constraints": {"min_len": 1, "on_invalid": 400}}
+      ],
+      "scenes_applicable": ["idempotent_replay"],
+      "scenes_na": {"auth": "本地环回服务无鉴权", "upstream_error": "纯本地存储不依赖上游"},
+      "response_schema_ref": "HistoryList"
+    }
+  ],
+  "response_schemas": {
+    "Card": {
+      "series_id": "string",
+      "title": "string",
+      "cover": "string(url)",
+      "hot": "number（上游 hot_score_data.score，无则0）",
+      "score": "number（列表页上游无评分，恒0；详情见 SeriesDetail.score）",
+      "total_episodes": "int",
+      "latest_episode": "int（=total_episodes）"
+    },
+    "CardList": {"list": "Card[]", "has_more": "bool"},
+    "RankList": {"list": "(Card & {rank:int 从1递增})[]"},
+    "EpisodeInfo": {"ep": "int", "seq": "int(=ep)", "title": "string（上游无单集标题，生成'第N集'）", "duration": "int秒（详情页上游无单集时长，恒0；起播后由 /api/play 提供）", "playable": "bool"},
+    "SeriesDetail": {
+      "series_id": "string",
+      "title": "string",
+      "cover": "string(url)",
+      "desc": "string",
+      "hot": "number",
+      "score": "number（seriesSocialInfo.rating）",
+      "total_episodes": "int",
+      "episodes": "EpisodeInfo[]（长度=total_episodes）"
+    },
+    "PlayInfo": {
+      "play_url": "string（实测 MP4 签名直链，非 HLS，见 upstream/NOTES.md）",
+      "duration": "int秒",
+      "next_ep": "int|null（末集为null）",
+      "prev_ep": "int|null（首集为null）"
+    },
+    "FavoriteRow": {"series_id": "string", "title": "string", "cover": "string", "total_episodes": "int", "created_at": "int(ms epoch)"},
+    "FavoriteList": {"list": "FavoriteRow[]（created_at DESC）"},
+    "HistoryRow": {"series_id": "string", "title": "string", "cover": "string", "ep": "int", "progress_sec": "int[0,86400]", "updated_at": "int(ms epoch)"},
+    "HistoryList": {"list": "HistoryRow[]（updated_at DESC）"}
+  }
+}

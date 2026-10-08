@@ -1,0 +1,26 @@
+{
+  "global_batch_id": "GB-HG-WB-20261006-001",
+  "cross_validation_hash": "7d188a90de28db0be2100d5042f76dfcb298b50768358fcfbe553bb5643452d8",
+  "cross_validation_hash_note": "引擎签发出参未含交叉校验哈希；本字段为用例集 canonical JSON 的 sha256 内容指纹（test-lead 计算，非签名），供执行期设计-执行对账防替换",
+  "baseline_diff_hash": "NO_BASELINE_FIRST_VERSION",
+  "baseline_diff_hash_note": "白盒基线不存在（src 未建，fe/be 未开工），无 diff 可算；执行挂起至前后端整合完成后（pm_quality_gate/test_lead_full）",
+  "env_label": "design-phase | Darwin arm64 (darwin 25.4.0) | python3.12 | agent-harness backend @127.0.0.1:8001 | execution_mode=integrated_whitebox",
+  "execution_mode": "integrated_whitebox",
+  "case_count": 35,
+  "smoke_count": 7,
+  "engine_receipt": {
+    "case_format": {
+      "code": "success",
+      "trace_id": "q4-fmt-23245c05fd15",
+      "checks_passed": 8
+    },
+    "sign_batch": {
+      "code": "success",
+      "trace_id": "sign-169043db9fcd",
+      "new_task_state": "CODE_REVIEW",
+      "algo": "hmac-sha256",
+      "signature": "0f242b18e6bb936b7939dbf9668b6e474f39c9bf29bf5ea0756de9f7f3ed3331",
+      "issued_at": "2026-10-06T04:35:33.731084+00:00"
+    }
+  }
+}

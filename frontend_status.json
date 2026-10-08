@@ -1,0 +1,71 @@
+{
+  "status": "DELIVERED",
+  "role": "frontend-development",
+  "ts": "2026-10-06",
+  "tasks": [
+    "T-001",
+    "T-005",
+    "T-006",
+    "T-007",
+    "T-008",
+    "T-009"
+  ],
+  "deliverables": [
+    "package.json（依赖一次写全：react18/hls.js/electron/electron-vite/electron-builder/better-sqlite3/vitest 等）",
+    "electron.vite.config.ts / tsconfig.json / .eslintrc.cjs / .prettierrc / electron-builder.yml / pnpm-workspace.yaml",
+    "src/main/index.ts（1280×800 min1100×700 单窗口 + .hg-port 端口文件/server 模块双通道端口解析 + 禁新开窗口）",
+    "src/preload/index.ts（注入 window.__HG_PORT__，0=未就绪）",
+    "src/renderer/（7页 Home/Category/Rank/Search/Detail/Player/Library，URL Hash 路由可刷新恢复）",
+    "src/renderer/src/api/dataSource.ts（渲染层唯一数据入口，mock 回落适配开关）",
+    "src/renderer/src/api/mock.ts（内置 mock，形态严格按 api_contract.json）",
+    "test/dataSource.test.ts（mock 回落逻辑 8 用例）+ test/mock.test.ts + test/smoke.mjs"
+  ],
+  "smoke_result": "{\"install\": \"PASS (pnpm install 含 better-sqlite3 原生编译)\", \"typecheck\": \"PASS (tsc --noEmit 0 error)\", \"build\": \"PASS (electron-vite build: out/main 2.37kB + out/preload + out/renderer)\", \"unit_test\": \"PASS (vitest 55 passed / 5 skipped live-smoke / 0 failed；fe 侧 dataSource 8 + mock 6 全过)\", \"lint\": \"PASS (eslint 0 error)\", \"smoke_script\": \"PASS (21/21：3 构建产物 + 18 data-testid)\", \"testid_gate\": \"A (gate-switch frontend_testid 判A：proto 18 可交互组件锚点全部注入)\", \"console_errors\": \"0（构建/测试零错误）\"}",
+  "pages_testid_coverage": {
+    "home": [
+      "nav-home",
+      "nav-category",
+      "nav-rank",
+      "nav-search",
+      "nav-library",
+      "search-input",
+      "series-card",
+      "retry-btn"
+    ],
+    "category": [
+      "series-card",
+      "retry-btn"
+    ],
+    "rank": [
+      "series-card"
+    ],
+    "search": [
+      "search-input",
+      "search-submit",
+      "series-card",
+      "retry-btn"
+    ],
+    "detail": [
+      "ep-btn",
+      "fav-btn",
+      "retry-btn"
+    ],
+    "player": [
+      "player-core",
+      "player-prev",
+      "player-next",
+      "player-rate",
+      "player-progress",
+      "player-close"
+    ],
+    "library": [
+      "fav-btn",
+      "history-item"
+    ]
+  },
+  "known_gaps": [
+    "mock 模式 play_url 使用公共 HLS 测试流（test-streams.mux.dev，CSP 已白名单）；be 数据层就绪后由 /api/play 真实地址替换，渲染层零改动",
+    "be 服务未启动时主进程按 .hg-port 读取失败注入 0，渲染层自动回落 mock（设计内行为，非缺陷）",
+    "T-010 electron-builder 实机出包未执行（属打包任务，配置已预留 mac arm64 dmg/zip + win nsis）"
+  ]
+}

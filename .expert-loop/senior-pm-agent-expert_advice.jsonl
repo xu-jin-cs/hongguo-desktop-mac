@@ -1,0 +1,3 @@
+{"ts":"2026-10-06","node":"spm","slot":"SLOT-1","expert_id":"A07-E13","title":"合规建设师","advice":"合规是底线：补请求节流+缓存自限、不采集外发用户数据","verdict":"accepted","applied":"prd.md §10 合规自限"}
+{"ts":"2026-10-06","node":"spm","slot":"SLOT-1","expert_id":"A04-E05","title":"领域建模师","advice":"边界跟着业务变化走：数据层三域分离，渲染进程禁止直连上游","verdict":"accepted","applied":"prd.md §10 架构边界"}
+{"ts":"2026-10-06","node":"spm","slot":"SLOT-1","expert_id":"A02-E01","title":"API设计师","advice":"先写契约再写代码：api_contract.json 唯一基线，契约先行","verdict":"accepted","applied":"prd.md §10 契约纪律"}

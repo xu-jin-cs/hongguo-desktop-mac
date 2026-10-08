@@ -1,0 +1,15 @@
+{
+  "tasks": [
+    {"id": "T-001", "module": "工程脚手架", "description": "electron-vite+React18+TS 骨架、ESLint/Prettier、pnpm dev 起空窗口、git init", "size": "S", "estimate": "2h", "acceptance": "pnpm dev 起窗、pnpm build 通过、控制台零错误", "deps": [], "tech_stack": "前端/桌面"},
+    {"id": "T-002", "module": "upstream 适配层", "description": "官方数据接口客户端：节流≥300ms、元数据缓存TTL10min、zod 校验、超时8s重试1次、异常码映射(502/504)、签名/headers 配置化", "size": "L", "estimate": "1d", "acceptance": "单测覆盖解析/重试/异常映射；脏数据不入库", "deps": ["T-001"], "tech_stack": "后端(Node)"},
+    {"id": "T-003", "module": "本地数据层服务", "description": "主进程 127.0.0.1 随机端口 HTTP 服务，9 个 /api/* 端点（home/category/rank/search/series/play/favorites/history），统一响应包", "size": "M", "estimate": "0.5d", "acceptance": "接口契约自测全过（正反边界）", "deps": ["T-002"], "tech_stack": "后端(Node)"},
+    {"id": "T-004", "module": "本地存储", "description": "better-sqlite3：favorites/history/settings 三表+索引，进度记忆读写", "size": "M", "estimate": "0.5d", "acceptance": "增删改查单测全过；progress_sec 边界正确", "deps": ["T-001"], "tech_stack": "后端(Node)"},
+    {"id": "T-005", "module": "UI 框架与路由", "description": "页面骨架与路由：Home/Category/Rank/Search/Detail/Player/Library，落地 ui_spec 视觉规范，data-testid 锚点", "size": "M", "estimate": "0.5d", "acceptance": "7 页路由可切换、视觉偏差≤2px、testid 全覆盖", "deps": ["T-001"], "tech_stack": "前端"},
+    {"id": "T-006", "module": "浏览四页", "description": "首页推荐/分类tab/排行tab/搜索页（搜索为本端补齐能力），卡片栅格+分页加载+错误态+离线态", "size": "M", "estimate": "0.5d", "acceptance": "首屏≤3s；搜索空/超长拦截；无网显示离线态", "deps": ["T-003", "T-005"], "tech_stack": "前端"},
+    {"id": "T-007", "module": "详情页+选集", "description": "元数据展示+全集选集栅格，不可播集置灰", "size": "S", "estimate": "2h", "acceptance": "157 集场景渲染正常；越界 ep 拦截", "deps": ["T-003", "T-005"], "tech_stack": "前端"},
+    {"id": "T-008", "module": "播放器", "description": "hls.js 竖屏 9:16 播放、上下集切换、倍速、进度条、5s 间隔进度落库、看完自动定位下一集", "size": "L", "estimate": "1d", "acceptance": "起播成功率100%（冒烟集合）；续播误差≤5s；切集无残留请求", "deps": ["T-003", "T-004", "T-007"], "tech_stack": "前端"},
+    {"id": "T-009", "module": "收藏/历史页", "description": "Library 页：收藏增删、历史列表、一键续播", "size": "S", "estimate": "2h", "acceptance": "收藏增删即时生效；历史按 updated_at 倒序", "deps": ["T-004", "T-005"], "tech_stack": "前端"},
+    {"id": "T-010", "module": "打包发布", "description": "electron-builder macOS arm64 出包，win target 配置预留不实机验证", "size": "S", "estimate": "2h", "acceptance": "pnpm dist:mac 出 .dmg/.zip，双击可运行", "deps": ["T-006", "T-008", "T-009"], "tech_stack": "桌面工程"}
+  ],
+  "范围文件清单": "scope_files.txt"
+}

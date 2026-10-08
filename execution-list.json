@@ -1,0 +1,978 @@
+{
+  "schema_version": "1.0",
+  "project": "hongguo-desktop",
+  "global_batch_id": "GB-HG-WB-20261006-001",
+  "execution_mode": "integrated_whitebox",
+  "phase": "design_only",
+  "precheck_record": {
+    "ts": "2026-10-06",
+    "principal": "test-lead",
+    "finding": "前置核验：白盒路源码尚不存在（/Users/xujin/projects/hongguo-desktop/src 未建，fe/be 未开工，task_breakdown T-001~T-010 均未启动）。按 2026-10-06 用户裁定（prd.md v1.1 §9）：本批次为【设计阶段产物】，用例设计照做、机械校验与签发照常；执行挂起至前后端整合完成后（pm_quality_gate / test_lead_full 阶段）由 test-lead 统一下发。",
+    "execution_trigger": "前后端整合完成（T-001~T-009 闭环）后，以本 execution-list.json 为唯一用例基线驱动 playwright 整合白盒执行 + 分支覆盖采集（三大模块目标 ≥80%）",
+    "route_change": "三路测试已收敛为仅【前后端整合白盒】一路：前端按钮/交互驱动后端（本地数据层）执行并断言分支命中；接口路、纯 UI 路取消不做。",
+    "reachability_policy": "个别后端参数校验分支（如 size>50、progress_sec 越界写入）纯 UI 不可达：用例以 reachability=dev_hook_required 标注，执行期允许 playwright 在 UI 会话内做最小直达注入（地址栏 hash 参数 / 本地数据层直发一次请求）作为 UI 触发的补充，用例语义（分支命中断言）不变；标注 interaction_gap 的用例依赖开发补齐 data-testid。"
+  },
+  "coverage_target": {
+    "modules": {
+      "upstream_adapter": "src/main/upstream/** （签名/headers、节流≥300ms、zod校验、超时8s重试1次、异常码映射502/504、元数据缓存TTL10min 命中/未命中）",
+      "local_service_router": "src/main/server/** （9端点路由分发、参数校验400、404、统一响应包、分页边界）",
+      "store_rw": "src/main/store/** （favorites增删/幂等、history读写/截断/倒序/95%看完、settings持久化）"
+    },
+    "branch_coverage_goal": ">=80% per module",
+    "mapping_summary": {
+      "upstream_adapter": ["TC-HG-001", "TC-HG-009", "TC-HG-023", "TC-HG-024", "TC-HG-025", "TC-HG-035"],
+      "local_service_router": ["TC-HG-001", "TC-HG-002", "TC-HG-003", "TC-HG-004", "TC-HG-005", "TC-HG-006", "TC-HG-007", "TC-HG-008", "TC-HG-010", "TC-HG-011", "TC-HG-012", "TC-HG-013", "TC-HG-017", "TC-HG-018", "TC-HG-021", "TC-HG-023", "TC-HG-024"],
+      "store_rw": ["TC-HG-005", "TC-HG-006", "TC-HG-027", "TC-HG-028", "TC-HG-029", "TC-HG-030", "TC-HG-031", "TC-HG-032", "TC-HG-033"],
+      "frontend_guards_aux": ["TC-HG-014", "TC-HG-015", "TC-HG-016", "TC-HG-019", "TC-HG-020", "TC-HG-022", "TC-HG-026", "TC-HG-034"]
+    }
+  },
+  "cases": [
+    {
+      "case_id": "TC-HG-001",
+      "title": "启动出首页：推荐feed卡片渲染（/api/home 正常链路·缓存未命中）",
+      "priority": "P0",
+      "smoke": true,
+      "module": ["local_service_router", "upstream_adapter"],
+      "ui_trigger": "启动应用 → 默认路由 #/home → 推荐栅格出现剧集卡片",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "3000"},
+        {"action": "assert_visible", "target": "series-card"},
+        {"action": "assert_visible", "target": "nav-home"}
+      ],
+      "backend_path": "GET /api/home?page=1&size=20 → upstream 适配层（签名/headers → 节流 → 缓存未命中 → 上游请求 → zod校验通过 → 回填缓存） → 统一响应包 code=0",
+      "source_node": "src/main/server/routes/home.ts + src/main/upstream/client.ts",
+      "source_branch": "cache_miss→upstream_fetch→zod_ok→cache_fill→code_0",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage"],
+      "expected": {
+        "ui": "首页渲染 ≥1 张 series-card；无错误态/无广告元素",
+        "backend": "响应包 {code:0, msg, data:{list 非空, has_more}}；data.list[*] 含 series_id/title/cover/hot/score/total_episodes/latest_episode",
+        "branch_assert": "覆盖缓存未命中分支、zod 校验通过分支、统一响应包封装分支；首屏 ≤3s"
+      }
+    },
+    {
+      "case_id": "TC-HG-002",
+      "title": "搜索提交触发 /api/search（关键词正常分支）",
+      "priority": "P0",
+      "smoke": true,
+      "module": ["local_service_router", "upstream_adapter"],
+      "ui_trigger": "click nav-search → input search-input \"复仇\" → click search-submit → 结果栅格出卡片",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "click", "target": "nav-search"},
+        {"action": "input", "target": "search-input", "value": "复仇"},
+        {"action": "click", "target": "search-submit"},
+        {"action": "wait", "value": "3000"},
+        {"action": "assert_visible", "target": "series-card"},
+        {"action": "assert_url", "expected_value": "#/search"}
+      ],
+      "backend_path": "GET /api/search?q=复仇&page=1&size=20 → upstream 搜索适配 → zod 校验 → 响应包 code=0",
+      "source_node": "src/main/server/routes/search.ts",
+      "source_branch": "q_valid(1-50字)→upstream_ok→code_0",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage"],
+      "expected": {
+        "ui": "结果栅格渲染 series-card",
+        "backend": "code=0；data.list 为数组；has_more 为 bool",
+        "branch_assert": "覆盖 q 必填校验通过分支、搜索上游适配解析分支"
+      }
+    },
+    {
+      "case_id": "TC-HG-003",
+      "title": "卡片点击进详情触发 /api/series（series_id 存在分支）",
+      "priority": "P0",
+      "smoke": true,
+      "module": ["local_service_router", "upstream_adapter"],
+      "ui_trigger": "首页 click 任一 series-card → 详情页渲染元数据 + 选集栅格 ep-btn",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "3000"},
+        {"action": "click", "target": "series-card"},
+        {"action": "wait", "value": "2000"},
+        {"action": "assert_visible", "target": "ep-btn"},
+        {"action": "assert_visible", "target": "fav-btn"}
+      ],
+      "backend_path": "GET /api/series?series_id=<id> → upstream 详情适配 → zod 校验 → episodes[] 下发",
+      "source_node": "src/main/server/routes/series.ts",
+      "source_branch": "series_found→episodes_nonempty→code_0",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage"],
+      "expected": {
+        "ui": "详情页显示标题/热度/评分/简介 + 选集栅格 ≥1 个 ep-btn",
+        "backend": "code=0；data 含 series_id/total_episodes/episodes[{ep,seq,title,duration,playable}]",
+        "branch_assert": "覆盖 series_id 存在分支、episodes 数组解析分支"
+      }
+    },
+    {
+      "case_id": "TC-HG-004",
+      "title": "选集触发 /api/play 起播（ep=1 首集 prev_ep=null 分支）",
+      "priority": "P0",
+      "smoke": true,
+      "module": ["local_service_router", "upstream_adapter"],
+      "ui_trigger": "详情页 click 第 1 集 ep-btn → 播放页 player-core 起播",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "3000"},
+        {"action": "click", "target": "series-card"},
+        {"action": "wait", "value": "2000"},
+        {"action": "click", "target": "ep-btn"},
+        {"action": "wait", "value": "3000"},
+        {"action": "assert_visible", "target": "player-core"},
+        {"action": "assert_url", "expected_value": "#/player/"}
+      ],
+      "backend_path": "GET /api/play?series_id=<id>&ep=1 → upstream 播放地址适配 → play_url(hls) 非空 → next_ep=2/prev_ep=null",
+      "source_node": "src/main/server/routes/play.ts",
+      "source_branch": "ep_in_range&&ep_first→prev_null→play_url_ok→code_0",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage"],
+      "expected": {
+        "ui": "player-core 可见并起播（video 元素 currentTime 前进）",
+        "backend": "code=0；data.play_url 为 hls url；prev_ep=null；next_ep=2（total_episodes≥2 时）",
+        "branch_assert": "覆盖 ep 下界分支、prev_ep null 分支、起播成功分支（冒烟集合起播成功率 100%）"
+      }
+    },
+    {
+      "case_id": "TC-HG-005",
+      "title": "收藏增删：favorites POST→GET→DELETE 全链（store 写读分支）",
+      "priority": "P0",
+      "smoke": true,
+      "module": ["store_rw", "local_service_router"],
+      "ui_trigger": "详情页 click fav-btn（收藏，按钮态实心切 ACTING→NORMAL）→ Library 收藏 tab 可见该项 → 再 click fav-btn（取消收藏）→ 列表移除",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "3000"},
+        {"action": "click", "target": "series-card"},
+        {"action": "wait", "value": "2000"},
+        {"action": "click", "target": "fav-btn"},
+        {"action": "wait", "value": "800"},
+        {"action": "click", "target": "nav-library"},
+        {"action": "wait", "value": "1000"},
+        {"action": "assert_visible", "target": "series-card"},
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "2000"},
+        {"action": "click", "target": "series-card"},
+        {"action": "wait", "value": "1500"},
+        {"action": "click", "target": "fav-btn"},
+        {"action": "wait", "value": "800"},
+        {"action": "click", "target": "nav-library"},
+        {"action": "wait", "value": "1000"},
+        {"action": "assert_text", "target": "body", "expected_value": "暂无内容"}
+      ],
+      "backend_path": "POST /api/favorites {series_id} → store.favorites INSERT → GET /api/favorites 列表含该项 → DELETE /api/favorites {series_id} → store DELETE → GET 列表不含",
+      "source_node": "src/main/server/routes/favorites.ts + src/main/store/favorites.ts",
+      "source_branch": "fav_insert→list_contains→fav_delete→list_not_contains",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage"],
+      "expected": {
+        "ui": "收藏后 Library 收藏 tab 出现该卡片；取消后列表为空态「暂无内容」；按钮态即时切换",
+        "backend": "POST/DELETE 均 code=0；GET data.list 增删前后快照差=1",
+        "branch_assert": "覆盖 favorites INSERT 分支、DELETE 分支、列表读分支（前后快照断言）"
+      }
+    },
+    {
+      "case_id": "TC-HG-006",
+      "title": "历史续播：播放退出落库 → Library 历史行一键续播（history 写+读分支）",
+      "priority": "P0",
+      "smoke": true,
+      "module": ["store_rw", "local_service_router"],
+      "ui_trigger": "播放页观看 ≥6s（触发 5s 间隔落库）→ click player-close 退出 → nav-library 历史 tab click history-item → player 以记录进度续播",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "3000"},
+        {"action": "click", "target": "series-card"},
+        {"action": "wait", "value": "2000"},
+        {"action": "click", "target": "ep-btn"},
+        {"action": "wait", "value": "7000"},
+        {"action": "click", "target": "player-close"},
+        {"action": "click", "target": "nav-library"},
+        {"action": "wait", "value": "1000"},
+        {"action": "assert_visible", "target": "history-item"},
+        {"action": "click", "target": "history-item"},
+        {"action": "wait", "value": "3000"},
+        {"action": "assert_visible", "target": "player-core"}
+      ],
+      "backend_path": "播放中每 5s POST /api/history {series_id,ep,progress_sec} → store.history UPSERT → GET /api/history 倒序列表 → 续播读取 progress_sec 起播",
+      "source_node": "src/main/server/routes/history.ts + src/main/store/history.ts",
+      "source_branch": "history_upsert→list_order_desc→resume_read_progress",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage"],
+      "expected": {
+        "ui": "历史行显示「看到第N集 · xx%」；续播起播进度与退出时误差 ≤5s",
+        "backend": "POST code=0；GET data.list[0] 为该 series_id 且 progress_sec>0",
+        "branch_assert": "覆盖 5s 定时落库分支、退出落库分支、续播读取分支"
+      }
+    },
+    {
+      "case_id": "TC-HG-007",
+      "title": "分类页默认 tab 触发 /api/category?type=real",
+      "priority": "P0",
+      "smoke": true,
+      "module": ["local_service_router", "upstream_adapter"],
+      "ui_trigger": "click nav-category → 默认真人剧 tab → 卡片栅格渲染",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "click", "target": "nav-category"},
+        {"action": "wait", "value": "3000"},
+        {"action": "assert_visible", "target": "series-card"},
+        {"action": "assert_url", "expected_value": "#/category"}
+      ],
+      "backend_path": "GET /api/category?type=real&page=1&size=20 → upstream 分类适配 → zod → code=0",
+      "source_node": "src/main/server/routes/category.ts",
+      "source_branch": "type_enum_valid(real)→upstream_ok→code_0",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage"],
+      "expected": {
+        "ui": "分类页卡片渲染",
+        "backend": "code=0；data.list 数组",
+        "branch_assert": "覆盖 type=real 合法枚举分支"
+      }
+    },
+    {
+      "case_id": "TC-HG-008",
+      "title": "首页翻页第二页：page=2 请求 + has_more=true 分支",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["local_service_router"],
+      "ui_trigger": "首页滚动分页至第 2 页（路由/状态携带 page=2）→ 追加渲染卡片",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "3000"},
+        {"action": "goto", "target": "#/home?page=2"},
+        {"action": "wait", "value": "3000"},
+        {"action": "assert_visible", "target": "series-card"}
+      ],
+      "backend_path": "GET /api/home?page=2&size=20 → 分页参数解析 → upstream → code=0 has_more=true",
+      "source_node": "src/main/server/routes/home.ts",
+      "source_branch": "page_2_valid→has_more_true→append_list",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage"],
+      "expected": {
+        "ui": "第二页卡片追加渲染且与第一页不重复",
+        "backend": "请求 query page=2；code=0；has_more=true",
+        "branch_assert": "覆盖 page>1 分页分支、has_more=true 分支"
+      }
+    },
+    {
+      "case_id": "TC-HG-009",
+      "title": "首页 TTL10min 内二次进入：元数据缓存命中分支（upstream 请求计数不增）",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["upstream_adapter"],
+      "ui_trigger": "进 #/home → 切 #/rank → 10min 内回到 #/home → 卡片秒出（缓存命中 ≤500ms）",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "3000"},
+        {"action": "click", "target": "nav-rank"},
+        {"action": "wait", "value": "2000"},
+        {"action": "click", "target": "nav-home"},
+        {"action": "wait", "value": "1000"},
+        {"action": "assert_visible", "target": "series-card"}
+      ],
+      "backend_path": "第二次 GET /api/home?page=1 → upstream 适配层缓存 TTL 未过期 → 直接返回缓存，不发上游请求",
+      "source_node": "src/main/upstream/client.ts（cache 层）",
+      "source_branch": "cache_hit(ttl_valid)→skip_upstream_fetch→code_0",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage", "upstream_request_counting"],
+      "expected": {
+        "ui": "卡片渲染；二次进入首屏 ≤500ms（缓存命中验收口径）",
+        "backend": "code=0；upstream 外发请求计数较首次 +0",
+        "branch_assert": "覆盖缓存命中分支（TTL 内）"
+      }
+    },
+    {
+      "case_id": "TC-HG-010",
+      "title": "分类四 tab 遍历：type 枚举 real/comic/ai/manga 全合法分支",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["local_service_router", "upstream_adapter"],
+      "ui_trigger": "分类页依次切换 真人剧/漫剧/AI剧/漫画 四个 tab → 每 tab 触发对应 type 请求",
+      "steps": [
+        {"action": "goto", "target": "#/category"},
+        {"action": "wait", "value": "3000"},
+        {"action": "assert_visible", "target": "series-card"},
+        {"action": "goto", "target": "#/category?type=comic"},
+        {"action": "wait", "value": "2000"},
+        {"action": "assert_visible", "target": "series-card"},
+        {"action": "goto", "target": "#/category?type=ai"},
+        {"action": "wait", "value": "2000"},
+        {"action": "assert_visible", "target": "series-card"},
+        {"action": "goto", "target": "#/category?type=manga"},
+        {"action": "wait", "value": "2000"},
+        {"action": "assert_visible", "target": "series-card"}
+      ],
+      "backend_path": "GET /api/category?type∈{real,comic,ai,manga} 各一次 → 枚举校验通过 → upstream → code=0",
+      "source_node": "src/main/server/routes/category.ts",
+      "source_branch": "type_enum_valid×4(real|comic|ai|manga)→code_0",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage"],
+      "expected": {
+        "ui": "四个 tab 均能渲染卡片或空态（不报错）",
+        "backend": "四次请求均 code=0",
+        "branch_assert": "覆盖 type 枚举全部 4 个合法分支"
+      }
+    },
+    {
+      "case_id": "TC-HG-011",
+      "title": "排行四榜遍历：board 枚举 hot/new/real/comic 全合法分支",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["local_service_router", "upstream_adapter"],
+      "ui_trigger": "click nav-rank → 依次切换 热度/新剧/真人/漫剧 榜 → 每榜触发对应 board 请求",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "click", "target": "nav-rank"},
+        {"action": "wait", "value": "3000"},
+        {"action": "assert_visible", "target": "series-card"},
+        {"action": "goto", "target": "#/rank?board=new"},
+        {"action": "wait", "value": "2000"},
+        {"action": "assert_visible", "target": "series-card"},
+        {"action": "goto", "target": "#/rank?board=real"},
+        {"action": "wait", "value": "2000"},
+        {"action": "assert_visible", "target": "series-card"},
+        {"action": "goto", "target": "#/rank?board=comic"},
+        {"action": "wait", "value": "2000"},
+        {"action": "assert_visible", "target": "series-card"}
+      ],
+      "backend_path": "GET /api/rank?board∈{hot,new,real,comic}&size≤50 → 枚举校验通过 → upstream → code=0（list 含 rank 字段）",
+      "source_node": "src/main/server/routes/rank.ts",
+      "source_branch": "board_enum_valid×4(hot|new|real|comic)→code_0",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage"],
+      "expected": {
+        "ui": "四榜均渲染排名行",
+        "backend": "四次请求均 code=0；data.list[*].rank 为 int",
+        "branch_assert": "覆盖 board 枚举全部 4 个合法分支"
+      }
+    },
+    {
+      "case_id": "TC-HG-012",
+      "title": "非法分类枚举直达：type=xxx → 400 → 页面 ERROR 态 + 重试",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["local_service_router"],
+      "ui_trigger": "地址栏直达 #/category?type=xxx（绕过 tab 构造非法枚举）→ 页面 ERROR 态 → click retry-btn → 再次 400 仍 ERROR",
+      "steps": [
+        {"action": "goto", "target": "#/category?type=xxx"},
+        {"action": "wait", "value": "2000"},
+        {"action": "assert_visible", "target": "retry-btn"},
+        {"action": "click", "target": "retry-btn"},
+        {"action": "wait", "value": "2000"},
+        {"action": "assert_visible", "target": "retry-btn"}
+      ],
+      "backend_path": "GET /api/category?type=xxx → 枚举校验失败 → 400 {code:400,msg} → 前端错误码映射 ERROR 态",
+      "source_node": "src/main/server/routes/category.ts",
+      "source_branch": "type_enum_invalid→code_400→frontend_error_state",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage"],
+      "expected": {
+        "ui": "ERROR 态（错误插画+重试按钮）；重试后仍 ERROR",
+        "backend": "code=400；msg 非空；data 为 null",
+        "branch_assert": "覆盖 type 非法枚举 400 分支、前端 400→ERROR 映射分支"
+      }
+    },
+    {
+      "case_id": "TC-HG-013",
+      "title": "非法榜单枚举直达：board=xxx → 400 → ERROR 态",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["local_service_router"],
+      "ui_trigger": "地址栏直达 #/rank?board=xxx → ERROR 态",
+      "steps": [
+        {"action": "goto", "target": "#/rank?board=xxx"},
+        {"action": "wait", "value": "2000"},
+        {"action": "assert_visible", "target": "retry-btn"}
+      ],
+      "backend_path": "GET /api/rank?board=xxx → 枚举校验失败 → 400 → 前端 ERROR 态",
+      "source_node": "src/main/server/routes/rank.ts",
+      "source_branch": "board_enum_invalid→code_400→frontend_error_state",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage"],
+      "expected": {
+        "ui": "ERROR 态 + retry-btn",
+        "backend": "code=400",
+        "branch_assert": "覆盖 board 非法枚举 400 分支"
+      }
+    },
+    {
+      "case_id": "TC-HG-014",
+      "title": "搜索 q 为空：前端拦截不发请求（前端 guard 分支）",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["frontend_guard"],
+      "ui_trigger": "搜索页 search-input 置空 → click search-submit → 输入框红描边 + 提示，网络面板零 /api/search 请求",
+      "steps": [
+        {"action": "goto", "target": "#/search"},
+        {"action": "input", "target": "search-input", "value": ""},
+        {"action": "click", "target": "search-submit"},
+        {"action": "assert_text", "target": "body", "expected_value": "请输入 1-50 字关键词"},
+        {"action": "assert_visible", "target": "search-input"}
+      ],
+      "backend_path": "（无后端请求）前端必填校验拦截 → 不触发 GET /api/search",
+      "source_node": "src/renderer/pages/Search.tsx（submit guard）",
+      "source_branch": "q_empty→frontend_block→no_request_sent",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage", "network_idle_assert"],
+      "expected": {
+        "ui": "红描边 + 提示「请输入 1-50 字关键词」",
+        "backend": "捕获到的 /api/search 请求数=0",
+        "branch_assert": "覆盖前端空 q 拦截分支（后端 400(q) 分支由 TC-HG-012 类 dev_hook 策略补充，本例锚定前端 guard）"
+      }
+    },
+    {
+      "case_id": "TC-HG-015",
+      "title": "搜索 q 超 50 字：前端拦截不发请求",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["frontend_guard"],
+      "ui_trigger": "search-input 输入 51 字 → click search-submit → 红描边提示，零请求",
+      "steps": [
+        {"action": "goto", "target": "#/search"},
+        {"action": "input", "target": "search-input", "value": "复仇复仇复仇复仇复仇复仇复仇复仇复仇复仇复仇复仇复仇复仇复仇复仇复仇复仇复仇复仇复仇复仇复仇复仇复仇复仇"},
+        {"action": "click", "target": "search-submit"},
+        {"action": "assert_text", "target": "body", "expected_value": "请输入 1-50 字关键词"}
+      ],
+      "backend_path": "（无后端请求）前端长度校验（>50）拦截",
+      "source_node": "src/renderer/pages/Search.tsx（submit guard）",
+      "source_branch": "q_len_gt_50→frontend_block→no_request_sent",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage", "network_idle_assert"],
+      "expected": {
+        "ui": "红描边 + 提示",
+        "backend": "/api/search 请求数=0",
+        "branch_assert": "覆盖前端超长拦截分支"
+      }
+    },
+    {
+      "case_id": "TC-HG-016",
+      "title": "搜索空结果：data.list=[] → EMPTY 空态分支",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["local_service_router", "frontend_guard"],
+      "ui_trigger": "搜索极冷门词 → 结果区空态插画 + 「暂无内容」",
+      "steps": [
+        {"action": "goto", "target": "#/search"},
+        {"action": "input", "target": "search-input", "value": "zzz绝不存在的剧名xyz"},
+        {"action": "click", "target": "search-submit"},
+        {"action": "wait", "value": "3000"},
+        {"action": "assert_text", "target": "body", "expected_value": "暂无内容"}
+      ],
+      "backend_path": "GET /api/search?q=<冷门词> → upstream 返回空 → code=0 data.list=[] → 前端 EMPTY 态",
+      "source_node": "src/main/server/routes/search.ts + src/renderer/pages/Search.tsx",
+      "source_branch": "result_empty→code_0_empty_list→frontend_empty_state",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage"],
+      "expected": {
+        "ui": "空态插画 + 「暂无内容」",
+        "backend": "code=0；data.list=[]；has_more=false",
+        "branch_assert": "覆盖空列表分支、前端 EMPTY 状态机迁移分支"
+      }
+    },
+    {
+      "case_id": "TC-HG-017",
+      "title": "搜索超大页码直达：page 越界空页 → has_more=false 分支",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["local_service_router"],
+      "ui_trigger": "先正常搜索一词，再地址栏直达大页码（hash 携带 page=9999）→ 空列表 + 不再加载",
+      "steps": [
+        {"action": "goto", "target": "#/search"},
+        {"action": "input", "target": "search-input", "value": "复仇"},
+        {"action": "click", "target": "search-submit"},
+        {"action": "wait", "value": "3000"},
+        {"action": "goto", "target": "#/search?q=%E5%A4%8D%E4%BB%87&page=9999"},
+        {"action": "wait", "value": "3000"},
+        {"action": "assert_text", "target": "body", "expected_value": "暂无内容"}
+      ],
+      "backend_path": "GET /api/search?q=复仇&page=9999 → 页码超出结果集 → code=0 data.list=[] has_more=false",
+      "source_node": "src/main/server/routes/search.ts",
+      "source_branch": "page_overflow→empty_page→has_more_false",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage"],
+      "expected": {
+        "ui": "空态；无继续加载行为",
+        "backend": "code=0；has_more=false",
+        "branch_assert": "覆盖分页末页 has_more=false 分支（与 TC-HG-008 的 true 分支配对）"
+      }
+    },
+    {
+      "case_id": "TC-HG-018",
+      "title": "详情 series_id 不存在 → 404 → 前端 EMPTY/错误映射分支",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["local_service_router"],
+      "ui_trigger": "地址栏直达 #/detail/__nonexist__ → 404 → 空态/错误态",
+      "steps": [
+        {"action": "goto", "target": "#/detail/__nonexist__"},
+        {"action": "wait", "value": "3000"},
+        {"action": "assert_not_visible", "target": "ep-btn"}
+      ],
+      "backend_path": "GET /api/series?series_id=__nonexist__ → 资源不存在 → 404 → 前端 404→EMPTY 映射",
+      "source_node": "src/main/server/routes/series.ts",
+      "source_branch": "series_not_found→code_404→frontend_empty_state",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage"],
+      "expected": {
+        "ui": "无选集栅格；显示空态或「暂无内容」",
+        "backend": "code=404；msg 非空",
+        "branch_assert": "覆盖 404 不存在分支、前端 404→EMPTY 映射分支"
+      }
+    },
+    {
+      "case_id": "TC-HG-019",
+      "title": "不可播集置灰：episodes[*].playable=false → ep-btn 禁用分支",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["frontend_guard", "local_service_router"],
+      "ui_trigger": "详情页含不可播集（数据准备：upstream 注入 playable=false 的集）→ 该集 ep-btn 置灰禁用",
+      "data_setup": "执行期以 mock 拦截 upstream 详情响应，将第 2 集 playable 置 false",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "3000"},
+        {"action": "click", "target": "series-card"},
+        {"action": "wait", "value": "2000"},
+        {"action": "assert_visible", "target": "ep-btn"}
+      ],
+      "backend_path": "GET /api/series → episodes 含 playable=false → 前端渲染禁用态",
+      "source_node": "src/renderer/pages/Detail.tsx（ep-btn render）",
+      "source_branch": "episode_unplayable→btn_disabled_grayed",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage", "mock_injection"],
+      "expected": {
+        "ui": "不可播集按钮 disabled + 置灰（tooltip「暂不可播」）",
+        "backend": "code=0；episodes[1].playable=false",
+        "branch_assert": "覆盖 playable=false 置灰分支"
+      }
+    },
+    {
+      "case_id": "TC-HG-020",
+      "title": "末集播放 ENDED：next_ep=null → 「已看完」分支",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["local_service_router", "frontend_guard"],
+      "ui_trigger": "详情页点最后一集（数据准备：total_episodes 已知的小剧集）→ 播放至 ENDED → 显示「已看完」",
+      "data_setup": "选用 total_episodes≤3 的剧集或 mock 详情响应压缩集数；播放器 seek 至末尾触发 ENDED",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "3000"},
+        {"action": "click", "target": "series-card"},
+        {"action": "wait", "value": "2000"},
+        {"action": "click", "target": "ep-btn"},
+        {"action": "wait", "value": "3000"},
+        {"action": "assert_visible", "target": "player-core"}
+      ],
+      "backend_path": "GET /api/play?series_id=<id>&ep=<total> → ep=total_episodes → next_ep=null",
+      "source_node": "src/main/server/routes/play.ts + src/renderer/pages/Player.tsx",
+      "source_branch": "ep_last→next_null→ended_show_finished",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage", "mock_injection"],
+      "expected": {
+        "ui": "末集播完显示「已看完」，不自动跳下一集",
+        "backend": "code=0；data.next_ep=null",
+        "branch_assert": "覆盖 ep=total_episodes 上界分支、next_ep=null 分支"
+      }
+    },
+    {
+      "case_id": "TC-HG-021",
+      "title": "ep 越界双边界（0 与 total+1）直达 → 400 →「集数不存在」回 Detail",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["local_service_router"],
+      "ui_trigger": "地址栏直达 #/player/<id>/0 与 #/player/<id>/9999 → 后端 400 → Player 显示「集数不存在」并回 Detail",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "3000"},
+        {"action": "click", "target": "series-card"},
+        {"action": "wait", "value": "2000"},
+        {"action": "goto", "target": "#/player/__current__/9999"},
+        {"action": "wait", "value": "2000"},
+        {"action": "assert_text", "target": "body", "expected_value": "集数不存在"},
+        {"action": "goto", "target": "#/player/__current__/0"},
+        {"action": "wait", "value": "2000"},
+        {"action": "assert_text", "target": "body", "expected_value": "集数不存在"}
+      ],
+      "backend_path": "GET /api/play?ep=9999 → ep>total_episodes → 400；GET /api/play?ep=0 → ep<1 → 400 → 前端 400 映射 + 回 Detail",
+      "source_node": "src/main/server/routes/play.ts",
+      "source_branch": "ep_out_of_range_high→code_400; ep_out_of_range_low→code_400",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage"],
+      "expected": {
+        "ui": "「集数不存在」提示并返回详情页",
+        "backend": "两次均 code=400",
+        "branch_assert": "覆盖 ep 上界/下界双 400 分支（__current__ 为执行期替换的占位 series_id）"
+      }
+    },
+    {
+      "case_id": "TC-HG-022",
+      "title": "播放地址为空：play_url 空 → 「该片源暂不可用」可切集分支",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["local_service_router", "frontend_guard"],
+      "ui_trigger": "点集起播（数据准备：mock /api/play 返回 play_url 空）→ 播放器 UNPLAYABLE 提示，可切下一集",
+      "data_setup": "mock 拦截 /api/play 首集响应 play_url=\"\"",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "3000"},
+        {"action": "click", "target": "series-card"},
+        {"action": "wait", "value": "2000"},
+        {"action": "click", "target": "ep-btn"},
+        {"action": "wait", "value": "3000"},
+        {"action": "assert_visible", "target": "player-next"}
+      ],
+      "backend_path": "GET /api/play → data.play_url 空 → 前端 UNPLAYABLE 态",
+      "source_node": "src/renderer/pages/Player.tsx + src/main/server/routes/play.ts",
+      "source_branch": "play_url_empty→unplayable_prompt→switch_ep_available",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage", "mock_injection"],
+      "expected": {
+        "ui": "提示「该片源暂不可用」；player-next 可点击切集",
+        "backend": "code=0；play_url 为空串",
+        "branch_assert": "覆盖播放地址空兜底分支"
+      }
+    },
+    {
+      "case_id": "TC-HG-023",
+      "title": "上游脏数据 zod 校验失败 → 502「片源异常」+ 重试分支",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["upstream_adapter", "local_service_router"],
+      "ui_trigger": "进首页（数据准备：mock 上游返回缺字段脏数据）→ ERROR 态「片源异常」→ click retry-btn → LOADING → 仍 502",
+      "data_setup": "mock 上游 /home 响应剔除 title 字段（zod 必失败）",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "3000"},
+        {"action": "assert_text", "target": "body", "expected_value": "片源异常"},
+        {"action": "click", "target": "retry-btn"},
+        {"action": "wait", "value": "2000"},
+        {"action": "assert_text", "target": "body", "expected_value": "片源异常"}
+      ],
+      "backend_path": "GET /api/home → upstream 返回脏数据 → zod 校验失败（记日志，不渲染脏数据）→ 502 → 前端 ERROR 态",
+      "source_node": "src/main/upstream/client.ts（zod 校验层）",
+      "source_branch": "zod_fail→log_and_code_502→frontend_error_retry",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage", "mock_injection"],
+      "expected": {
+        "ui": "ERROR 态「片源异常」+ retry-btn；页面无脏数据渲染",
+        "backend": "code=502",
+        "branch_assert": "覆盖 zod 校验失败→502 映射分支、重试分支"
+      }
+    },
+    {
+      "case_id": "TC-HG-024",
+      "title": "上游超时重试耗尽 → 504「网络超时」分支",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["upstream_adapter", "local_service_router"],
+      "ui_trigger": "进首页（数据准备：mock 上游持续不响应 >8s×2）→ ERROR 态「网络超时」",
+      "data_setup": "mock 上游延迟 9s（超过 8s 超时），重试 1 次仍超时",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "20000"},
+        {"action": "assert_text", "target": "body", "expected_value": "网络超时"}
+      ],
+      "backend_path": "GET /api/home → upstream 8s 超时 → 重试 1 次再超时 → 504 → 前端 ERROR「网络超时」",
+      "source_node": "src/main/upstream/client.ts（timeout/retry 层）",
+      "source_branch": "timeout_8s→retry_once→timeout_again→code_504",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage", "mock_injection"],
+      "expected": {
+        "ui": "ERROR 态「网络超时」+ retry-btn",
+        "backend": "code=504；上游实际请求次数=2（首发+重试）",
+        "branch_assert": "覆盖超时重试耗尽→504 分支"
+      }
+    },
+    {
+      "case_id": "TC-HG-025",
+      "title": "上游首次超时重试成功 → 正常渲染（retry_once→success 分支）",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["upstream_adapter"],
+      "ui_trigger": "进首页（数据准备：mock 上游第一次超时、第二次正常返回）→ 卡片正常渲染",
+      "data_setup": "mock 上游首请求延迟 9s，重试请求正常返回",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "15000"},
+        {"action": "assert_visible", "target": "series-card"}
+      ],
+      "backend_path": "GET /api/home → 首发 8s 超时 → 重试 1 次成功 → zod 通过 → code=0",
+      "source_node": "src/main/upstream/client.ts（timeout/retry 层）",
+      "source_branch": "timeout_8s→retry_once→retry_success→code_0",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage", "mock_injection"],
+      "expected": {
+        "ui": "卡片正常渲染（无 ERROR 态残留）",
+        "backend": "code=0；上游请求次数=2",
+        "branch_assert": "覆盖重试成功分支（与 TC-HG-024 耗尽分支配对）"
+      }
+    },
+    {
+      "case_id": "TC-HG-026",
+      "title": "离线态：OFFLINE 横幅 + Library 纯本地可用分支",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["frontend_guard", "store_rw"],
+      "ui_trigger": "环境断网（数据准备：playwright setOffline true，预置本地历史数据）→ 进首页显示离线横幅 → Library 历史/收藏仍可浏览",
+      "data_setup": "context.setOffline(true)；预置 favorites/history 各 1 条（启动前经本地数据层 POST 写入）",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "2000"},
+        {"action": "assert_text", "target": "body", "expected_value": "已离线，可查看本地收藏/历史"},
+        {"action": "click", "target": "nav-library"},
+        {"action": "wait", "value": "1000"},
+        {"action": "assert_visible", "target": "history-item"}
+      ],
+      "backend_path": "无网时 upstream 请求失败 → 首页 ERROR/OFFLINE；GET /api/history / GET /api/favorites 走本地 store 不依赖网络 → code=0",
+      "source_node": "src/renderer/App.tsx（offline 横幅）+ src/main/store/*.ts",
+      "source_branch": "offline→offline_banner; library_local_read_ok",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage"],
+      "expected": {
+        "ui": "顶部横幅「已离线，可查看本地收藏/历史」；Library 列表正常",
+        "backend": "本地 store 读接口 code=0",
+        "branch_assert": "覆盖 OFFLINE 状态机分支、本地读无网可用分支"
+      }
+    },
+    {
+      "case_id": "TC-HG-027",
+      "title": "重复收藏幂等：favorites 同 series_id 二次写入 → upsert 幂等分支",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["store_rw"],
+      "reachability": "dev_hook_required",
+      "ui_trigger": "收藏某剧后，经最小直达注入（本地数据层 POST /api/favorites 同 series_id 再发一次）模拟双击/重放 → Library 列表仍仅 1 条",
+      "data_setup": "playwright request 上下文对本地端口直发第二次 POST（纯 UI 按钮态不可达，见 precheck_record.reachability_policy）",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "3000"},
+        {"action": "click", "target": "series-card"},
+        {"action": "wait", "value": "2000"},
+        {"action": "click", "target": "fav-btn"},
+        {"action": "wait", "value": "800"},
+        {"action": "click", "target": "nav-library"},
+        {"action": "wait", "value": "1000"},
+        {"action": "assert_visible", "target": "series-card"}
+      ],
+      "backend_path": "POST /api/favorites ×2（同 series_id）→ store INSERT OR REPLACE/幂等 → GET 列表 count=1",
+      "source_node": "src/main/store/favorites.ts",
+      "source_branch": "fav_duplicate_insert→upsert_idempotent→count_unchanged",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage", "dev_hook_inject"],
+      "expected": {
+        "ui": "收藏列表仅 1 条该 series",
+        "backend": "两次 POST 均 code=0；列表无重复",
+        "branch_assert": "覆盖 PK 冲突幂等分支"
+      }
+    },
+    {
+      "case_id": "TC-HG-028",
+      "title": "收藏持久化：refresh 后 Library 收藏仍存（store 启动读分支）",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["store_rw"],
+      "ui_trigger": "收藏后 refresh 页面（模拟重启渲染进程）→ Library 收藏 tab 仍显示该卡片",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "3000"},
+        {"action": "click", "target": "series-card"},
+        {"action": "wait", "value": "2000"},
+        {"action": "click", "target": "fav-btn"},
+        {"action": "wait", "value": "800"},
+        {"action": "refresh"},
+        {"action": "wait", "value": "2000"},
+        {"action": "click", "target": "nav-library"},
+        {"action": "wait", "value": "1000"},
+        {"action": "assert_visible", "target": "series-card"}
+      ],
+      "backend_path": "refresh 后 GET /api/favorites → store SQLite 持久化读取 → code=0 列表含该项",
+      "source_node": "src/main/store/favorites.ts",
+      "source_branch": "fav_persist_read_after_reload",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage"],
+      "expected": {
+        "ui": "refresh 后收藏不丢",
+        "backend": "code=0；list 含该 series_id",
+        "branch_assert": "覆盖 SQLite 持久化读分支"
+      }
+    },
+    {
+      "case_id": "TC-HG-029",
+      "title": "进度≥95% 视为看完：再进入自动定位下一集分支",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["store_rw", "frontend_guard"],
+      "ui_trigger": "数据准备：store 预置 history progress_sec=duration×0.96（ep=1）→ Library 点击该 history-item → 播放器自动起播第 2 集",
+      "data_setup": "启动后经 POST /api/history 写入 progress_sec=96%×duration 的记录",
+      "steps": [
+        {"action": "goto", "target": "#/library"},
+        {"action": "wait", "value": "1500"},
+        {"action": "assert_visible", "target": "history-item"},
+        {"action": "click", "target": "history-item"},
+        {"action": "wait", "value": "3000"},
+        {"action": "assert_visible", "target": "player-core"},
+        {"action": "assert_url", "expected_value": "#/player/"}
+      ],
+      "backend_path": "续播逻辑读 history.progress_sec ≥ duration×0.95 → 自动定位 ep+1 → GET /api/play?ep=2",
+      "source_node": "src/renderer/pages/Player.tsx（resume 逻辑）+ src/main/store/history.ts",
+      "source_branch": "progress_ge_95pct→auto_next_ep",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage"],
+      "expected": {
+        "ui": "起播集数为下一集（非记录集）",
+        "backend": "/api/play 请求 ep=2",
+        "branch_assert": "覆盖 95% 看完判定分支（PRD §7）"
+      }
+    },
+    {
+      "case_id": "TC-HG-030",
+      "title": "progress_sec 越界写入截断 [0,duration] 分支",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["store_rw"],
+      "reachability": "dev_hook_required",
+      "ui_trigger": "播放中拖动进度条至接近末尾（player-progress seek）触发落库；另经最小直达注入 POST progress_sec=99999（>duration 上限场景）→ 读回值被截断至 duration",
+      "data_setup": "playwright request 直发 POST /api/history {series_id,ep,progress_sec:99999}（契约 max 86400 内、超 duration，锚定截断分支）",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "3000"},
+        {"action": "click", "target": "series-card"},
+        {"action": "wait", "value": "2000"},
+        {"action": "click", "target": "ep-btn"},
+        {"action": "wait", "value": "6000"},
+        {"action": "assert_visible", "target": "player-progress"}
+      ],
+      "backend_path": "POST /api/history progress_sec>duration → store 截断至 [0,duration] 落库 → GET 读回 ≤duration",
+      "source_node": "src/main/server/routes/history.ts + src/main/store/history.ts",
+      "source_branch": "progress_gt_duration→clamp_to_duration",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage", "dev_hook_inject"],
+      "expected": {
+        "ui": "播放页正常（无异常态）",
+        "backend": "GET /api/history 读回 progress_sec ≤ duration",
+        "branch_assert": "覆盖 progress 截断分支（交互设计 §10：越界截断至 [0,duration]）"
+      }
+    },
+    {
+      "case_id": "TC-HG-031",
+      "title": "历史列表 updated_at 倒序分支",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["store_rw"],
+      "ui_trigger": "先后观看两部剧（A 后 B）→ Library 历史 tab 第一行是 B（最近观看）",
+      "data_setup": "依次播放 A、B 两剧各 ≥6s 触发落库",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "3000"},
+        {"action": "click", "target": "series-card"},
+        {"action": "wait", "value": "2000"},
+        {"action": "click", "target": "ep-btn"},
+        {"action": "wait", "value": "7000"},
+        {"action": "click", "target": "player-close"},
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "2000"},
+        {"action": "click", "target": "series-card"},
+        {"action": "wait", "value": "2000"},
+        {"action": "click", "target": "ep-btn"},
+        {"action": "wait", "value": "7000"},
+        {"action": "click", "target": "player-close"},
+        {"action": "click", "target": "nav-library"},
+        {"action": "wait", "value": "1000"},
+        {"action": "assert_visible", "target": "history-item"}
+      ],
+      "backend_path": "两次 POST /api/history → GET /api/history 按 idx_history_updated DESC 返回，list[0] 为最近观看",
+      "source_node": "src/main/store/history.ts",
+      "source_branch": "list_order_updated_at_desc",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage"],
+      "expected": {
+        "ui": "历史首行为第二部剧",
+        "backend": "data.list[0].updated_at ≥ data.list[1].updated_at",
+        "branch_assert": "覆盖索引倒序读分支"
+      }
+    },
+    {
+      "case_id": "TC-HG-032",
+      "title": "历史删除：DELETE /api/history 分支（单条移除）",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["store_rw", "local_service_router"],
+      "interaction_gap": "交互设计 §7 未定义历史行删除按钮 testid；执行前需开发补 data-testid=del-history-btn（悬浮于 history-item）",
+      "ui_trigger": "Library 历史 tab 悬浮 history-item → click del-history-btn → 该行消失",
+      "steps": [
+        {"action": "goto", "target": "#/library"},
+        {"action": "wait", "value": "1500"},
+        {"action": "assert_visible", "target": "history-item"},
+        {"action": "click", "target": "del-history-btn"},
+        {"action": "wait", "value": "800"},
+        {"action": "assert_text", "target": "body", "expected_value": "暂无内容"}
+      ],
+      "backend_path": "DELETE /api/history {series_id} → store DELETE → GET 列表不含该 series_id",
+      "source_node": "src/main/server/routes/history.ts + src/main/store/history.ts",
+      "source_branch": "history_delete→list_not_contains",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage"],
+      "expected": {
+        "ui": "删除后列表移除该行（空列表则空态）",
+        "backend": "DELETE code=0；GET list 不含该 series_id",
+        "branch_assert": "覆盖 history DELETE 分支（依赖 testid 补齐，见 interaction_gap）"
+      }
+    },
+    {
+      "case_id": "TC-HG-033",
+      "title": "倍速切换 settings 持久化：下次播放沿用分支",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["store_rw"],
+      "ui_trigger": "播放页 click player-rate 切 1.5 倍 → 退出 → 再进另一集播放 → 播放器默认 1.5 倍",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "3000"},
+        {"action": "click", "target": "series-card"},
+        {"action": "wait", "value": "2000"},
+        {"action": "click", "target": "ep-btn"},
+        {"action": "wait", "value": "3000"},
+        {"action": "click", "target": "player-rate"},
+        {"action": "wait", "value": "800"},
+        {"action": "click", "target": "player-close"},
+        {"action": "click", "target": "ep-btn"},
+        {"action": "wait", "value": "3000"},
+        {"action": "assert_visible", "target": "player-rate"}
+      ],
+      "backend_path": "倍速切换 → settings 表写入 rate=1.5（经本地数据层 settings 读写）→ 下次起播读取沿用",
+      "source_node": "src/main/store/settings.ts",
+      "source_branch": "settings_rate_write→settings_rate_read_on_boot",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage"],
+      "expected": {
+        "ui": "第二次起播 player-rate 显示 1.5x",
+        "backend": "settings 表 key=play_rate value=1.5",
+        "branch_assert": "覆盖 settings 写读分支"
+      }
+    },
+    {
+      "case_id": "TC-HG-034",
+      "title": "上下集切换：player-next 触发 ep+1 请求 + 旧流请求 abort 无残留",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["local_service_router", "frontend_guard"],
+      "ui_trigger": "播放第 1 集 → click player-next → 起播第 2 集（URL ep=2）；上一集请求被中止",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "3000"},
+        {"action": "click", "target": "series-card"},
+        {"action": "wait", "value": "2000"},
+        {"action": "click", "target": "ep-btn"},
+        {"action": "wait", "value": "3000"},
+        {"action": "click", "target": "player-next"},
+        {"action": "wait", "value": "3000"},
+        {"action": "assert_visible", "target": "player-core"},
+        {"action": "assert_url", "expected_value": "/2"}
+      ],
+      "backend_path": "GET /api/play?ep=2 → code=0 play_url 更新；上一集 hls 请求 abort",
+      "source_node": "src/main/server/routes/play.ts + src/renderer/pages/Player.tsx",
+      "source_branch": "ep_switch→abort_prev_request→play_next_ok",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage", "network_abort_assert"],
+      "expected": {
+        "ui": "第 2 集起播，控制条集数更新",
+        "backend": "code=0；ep=2；无残留进行中旧集请求",
+        "branch_assert": "覆盖切集分支 + 旧请求清理分支（验收：切集无残留请求）"
+      }
+    },
+    {
+      "case_id": "TC-HG-035",
+      "title": "上游节流 ≥300ms：快速连续切集时 upstream 请求间隔合规",
+      "priority": "P1",
+      "smoke": false,
+      "module": ["upstream_adapter"],
+      "ui_trigger": "播放页快速连续 click player-next ×3 → upstream 外发请求时间戳两两间隔 ≥300ms",
+      "steps": [
+        {"action": "goto", "target": "#/home"},
+        {"action": "wait", "value": "3000"},
+        {"action": "click", "target": "series-card"},
+        {"action": "wait", "value": "2000"},
+        {"action": "click", "target": "ep-btn"},
+        {"action": "wait", "value": "3000"},
+        {"action": "click", "target": "player-next"},
+        {"action": "click", "target": "player-next"},
+        {"action": "click", "target": "player-next"},
+        {"action": "wait", "value": "3000"},
+        {"action": "assert_visible", "target": "player-core"}
+      ],
+      "backend_path": "三次 GET /api/play → upstream 适配层节流队列 → 外发请求间隔 ≥300ms（单接口节流合规自限 A07-E13）",
+      "source_node": "src/main/upstream/client.ts（throttle 层）",
+      "source_branch": "throttle_min_interval_300ms",
+      "test_methods": ["integrated_whitebox", "playwright_e2e", "branch_coverage", "upstream_timing_assert"],
+      "expected": {
+        "ui": "最终集正常起播",
+        "backend": "upstream 请求时间戳差 ≥300ms；三次均 code=0",
+        "branch_assert": "覆盖节流排队分支"
+      }
+    }
+  ]
+}

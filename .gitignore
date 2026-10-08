@@ -1,0 +1,11 @@
+node_modules/
+out/
+dist/
+*.log
+.DS_Store
+.hg-port
+test/vendor-node/node_modules/
+dist-app/
+test/evidence/
+test/vendor-node/
+.git.bak-*/
